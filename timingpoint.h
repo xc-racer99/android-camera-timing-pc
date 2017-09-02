@@ -15,7 +15,6 @@ private:
     QSlider *imageSlider;
     QLabel *serverStatus;
     QLabel *ipAddressLabel;
-
 signals:
 
 public slots:

@@ -1,3 +1,4 @@
+#include <QFileDialog>
 #include <QGridLayout>
 #include <QImage>
 #include <QLabel>
@@ -56,5 +57,11 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
     setLayout(layout);
 
     setWindowTitle("Timing Point");
+
+    // Create a file dialog bog
+    QFileDialog *fileDialog = new QFileDialog();
+    QString mainFolder;
+    fileDialog->setFileMode(QFileDialog::Directory);
+    mainFolder = fileDialog->exec();
 }
 
