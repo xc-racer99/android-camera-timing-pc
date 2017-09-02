@@ -8,14 +8,14 @@
 #include <QDialogButtonBox>
 #include <QObject>
 
-#include "timingpointinfo.h"
+#include "timingpoint.h"
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    TimingPointInfo info;
-    info.show();
+    TimingPoint tPoint;
+    tPoint.show();
 
     return app.exec();
 }
