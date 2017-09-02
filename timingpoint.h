@@ -2,7 +2,7 @@
 #define TIMINGPOINT_H
 
 #include <QWidget>
-#include <QScrollArea>
+#include <QSlider>
 #include <QLabel>
 
 class TimingPoint : public QWidget
@@ -12,6 +12,10 @@ public:
     explicit TimingPoint(QWidget *parent = 0);
 private:
     QLabel *imageHolder;
+    QSlider *imageSlider;
+    QLabel *serverStatus;
+    QLabel *ipAddressLabel;
+
 signals:
 
 public slots:
