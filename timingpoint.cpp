@@ -8,9 +8,14 @@
 #include <QSlider>
 
 #include "timingpoint.h"
+#include "timingpointinfo.h"
 
 TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
 {
+    // Create our strings
+    ipAddressString = new QString("0.0.0.0");
+    serverStatusString = new QString("Disconnected");
+
     // Setup a QLabel which holds the image
     imageHolder = new QLabel;
     imageHolder->setBackgroundRole(QPalette::Base);
@@ -39,10 +44,8 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
 
     // Add info labels
     ipAddressLabel = new QLabel();
-    ipAddressLabel->setText(tr("IP: 0.0.0.0"));
 
     serverStatus = new QLabel();
-    serverStatus->setText(tr("Server Status: Disconnected"));
 
     // Our layout
     QGridLayout *layout = new QGridLayout();
@@ -58,10 +61,39 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
 
     setWindowTitle("Timing Point");
 
-    // Create a file dialog bog
-    QFileDialog *fileDialog = new QFileDialog();
+    // Create a file dialog box
+    QFileDialog fileDialog(this);
     QString mainFolder;
-    fileDialog->setFileMode(QFileDialog::Directory);
-    mainFolder = fileDialog->exec();
+    fileDialog.setFileMode(QFileDialog::Directory);
+
+    if(fileDialog.exec())
+        mainFolder = fileDialog.selectedFiles().at(0);
+
+    // Create a dialog asking for connection info
+    dialog = new QDialog(this);
+    dialog->setFixedSize(210, 110);
+    TimingPointInfo info(dialog);
+
+    // Connect things together
+    connect(&info, SIGNAL(setupCompleted(QString,QString)), this, SLOT(setConnectionInfo(QString,QString)));
+
+    // Show the dialog
+    dialog->exec();
+}
+
+void TimingPoint::setIpAddress() {
+    ipAddressLabel->setText(tr("IP: %1").arg(*ipAddressString));
+
+}
+
+void TimingPoint::setConnectionStatus() {
+    serverStatus->setText(tr("Server Status: %1").arg(*serverStatusString));
+
+}
+
+void TimingPoint::setConnectionInfo(QString ip, QString name) {
+    ipAddressString = &ip;
+    dialog->accept();
+    setIpAddress();
 }
 

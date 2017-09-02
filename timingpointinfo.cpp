@@ -54,7 +54,5 @@ void TimingPointInfo::enableConnectButton() {
 }
 
 void TimingPointInfo::onConnectClicked() {
-    // Setup our TCP connection
-
-    // Create a new timing point to review the pictures
+    emit setupCompleted(hostLineEdit->text(), timingPointLineEdit->text());
 }

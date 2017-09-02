@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSlider>
 #include <QLabel>
+#include <QDialog>
 
 class TimingPoint : public QWidget
 {
@@ -15,8 +16,14 @@ private:
     QSlider *imageSlider;
     QLabel *serverStatus;
     QLabel *ipAddressLabel;
+    QString *ipAddressString;
+    QString *serverStatusString;
+    QDialog *dialog;
 signals:
-
+private slots:
+    void setConnectionInfo(QString ip, QString name);
+    void setIpAddress();
+    void setConnectionStatus();
 public slots:
 };
 
