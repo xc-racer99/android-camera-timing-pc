@@ -45,7 +45,7 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
     // Add info labels
     ipAddressLabel = new QLabel();
 
-    serverStatus = new QLabel();
+    serverStatus = new QLabel("Server Status: Disconnected");
 
     // Our layout
     QGridLayout *layout = new QGridLayout();
@@ -83,17 +83,17 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
 
 void TimingPoint::setIpAddress() {
     ipAddressLabel->setText(tr("IP: %1").arg(*ipAddressString));
-
 }
 
 void TimingPoint::setConnectionStatus() {
     serverStatus->setText(tr("Server Status: %1").arg(*serverStatusString));
-
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
     ipAddressString = &ip;
     dialog->accept();
     setIpAddress();
-}
 
+    // Start the connection
+
+}
