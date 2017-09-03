@@ -10,7 +10,7 @@ class TimingPoint : public QWidget
 {
     Q_OBJECT
 public:
-    explicit TimingPoint(QWidget *parent = 0);
+    explicit TimingPoint(QString directory, QWidget *parent = 0);
 private:
     QLabel *imageHolder;
     QSlider *imageSlider;

@@ -11,8 +11,11 @@
 #include "timingpoint.h"
 #include "timingpointinfo.h"
 
-TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
+TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
 {
+    // Pass the directory along
+    mainFolder = &directory;
+
     // Create our strings
     ipAddressString = new QString("0.0.0.0");
     serverStatusString = new QString("Disconnected");
@@ -62,23 +65,13 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
 
     setWindowTitle("Timing Point");
 
-    // Create a file dialog box
-    QFileDialog fileDialog(this);
-    fileDialog.setFileMode(QFileDialog::Directory);
-
-    if(fileDialog.exec()) {
-        QString temp;
-        temp = fileDialog.selectedFiles().at(0);
-        mainFolder = &temp;
-    }
-
     // Create a dialog asking for connection info
     dialog = new QDialog(this);
     dialog->setFixedSize(210, 110);
     TimingPointInfo info(dialog);
 
     // Connect things together
-    connect(&info, SIGNAL(setupCompleted(QString,QString)), this, SLOT(setConnectionInfo(QString,QString)));
+    connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(setConnectionInfo(QString,QString)));
 
     // Show the dialog
     dialog->exec();
@@ -99,8 +92,7 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
 
     // Start the connection
     MyTcpSocket socket;
+    QString directory = *mainFolder;
     socket.doConnect(ip);
-    //FIX-ME
-    name = "/home/jon/";
-    socket.saveImages(name);
+    socket.saveImages(directory);
 }
