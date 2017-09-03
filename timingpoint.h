@@ -19,6 +19,7 @@ private:
     QString *ipAddressString;
     QString *serverStatusString;
     QDialog *dialog;
+    QString *mainFolder;
 signals:
 private slots:
     void setConnectionInfo(QString ip, QString name);

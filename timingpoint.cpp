@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QSlider>
 
+#include "mytcpsocket.h"
 #include "timingpoint.h"
 #include "timingpointinfo.h"
 
@@ -63,11 +64,13 @@ TimingPoint::TimingPoint(QWidget *parent) : QWidget(parent)
 
     // Create a file dialog box
     QFileDialog fileDialog(this);
-    QString mainFolder;
     fileDialog.setFileMode(QFileDialog::Directory);
 
-    if(fileDialog.exec())
-        mainFolder = fileDialog.selectedFiles().at(0);
+    if(fileDialog.exec()) {
+        QString temp;
+        temp = fileDialog.selectedFiles().at(0);
+        mainFolder = &temp;
+    }
 
     // Create a dialog asking for connection info
     dialog = new QDialog(this);
@@ -95,5 +98,9 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     setIpAddress();
 
     // Start the connection
-
+    MyTcpSocket socket;
+    socket.doConnect(ip);
+    //FIX-ME
+    name = "/home/jon/";
+    socket.saveImages(name);
 }

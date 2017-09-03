@@ -12,12 +12,13 @@ public:
 
     void doConnect(QString host);
     void saveImages(QString directory);
-    long bytesToLong(QByteArray b);
 signals:
 
 public slots:
 private:
     QTcpSocket *socket;
+
+    long bytesToLong(QByteArray b);
 };
 
 #endif // MYTCPSOCKET_H

@@ -19,21 +19,33 @@ void MyTcpSocket::doConnect(QString host) {
 }
 
 void MyTcpSocket::saveImages(QString directory) {
-    while (socket->isOpen()) {
-        if (socket->bytesAvailable()) {
-            // Read the first 64 bits - timestamp
-            QString timestamp = socket->read(1);
+    while(socket->isOpen() && socket->waitForReadyRead(-1) && socket->bytesAvailable()) {
+        // Read the first 64 bits - timestamp
+        QByteArray timeStampBytes = socket->read(8);
+        long timestamp = bytesToLong(timeStampBytes);
+        qDebug("reading timestamp %ld", timestamp);
 
-            // Read the next 64 bits - the size of the image
-            QByteArray unprocessedBytes = socket->read(1);
-            long bytes = bytesToLong(unprocessedBytes);
+        // Read the next 64 bits - the size of the image
+        if(socket->waitForReadyRead()) {
+            QByteArray imageSizeBytes = socket->read(8);
+            long imageSize = bytesToLong(imageSizeBytes);
+            qDebug("file size is %ld", imageSize);
 
-            // Actually read the image and save to a file
-            QFile file(directory + timestamp + ".jpg");
-            file.open(QIODevice::WriteOnly);
-            file.write(socket->read(bytes));
-            file.flush();
-            file.close();
+            if(socket->waitForReadyRead(-1)) {
+                // Actually read the image and save to a file
+                QFile file(directory + QString::number(timestamp) + ".jpg");
+
+                qDebug("Saving to file %s", file.fileName().toLatin1().constData());
+                file.open(QIODevice::WriteOnly);
+
+                qint64 bytesLeft = imageSize;
+                while(bytesLeft > 0 && (socket->bytesAvailable() || socket->waitForReadyRead(5000))) {
+                    bytesLeft -= file.write(socket->read(bytesLeft));
+                }
+
+                file.close();
+                qDebug("Saved to file");
+            }
         }
     }
 }
