@@ -14,6 +14,7 @@ void MyTcpSocket::process() {
 
     if(socket->waitForConnected(50000)) {
         qDebug() << tr("Connected %1").arg(hostName);
+        emit connected();
     } else {
         qDebug() << tr("Failed to connect to %1").arg(hostName);
     }

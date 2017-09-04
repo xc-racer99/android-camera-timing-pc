@@ -12,6 +12,7 @@ public:
 signals:
     void finished();
     void newImage(QString filename);
+    void connected();
 public slots:
     void process();
 private:

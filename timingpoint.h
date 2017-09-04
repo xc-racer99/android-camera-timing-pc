@@ -24,7 +24,8 @@ signals:
 private slots:
     void setConnectionInfo(QString ip, QString name);
     void setIpAddress();
-    void setConnectionStatus();
+    void setConnected();
+    void setDisconnected();
     void startBackgroundThread(QString ip, QString name);
     void addNewImage(QString fileName);
 public slots:

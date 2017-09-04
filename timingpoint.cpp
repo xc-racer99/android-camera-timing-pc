@@ -1,3 +1,5 @@
+#include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QGridLayout>
 #include <QImage>
@@ -82,27 +84,53 @@ void TimingPoint::setIpAddress() {
     ipAddressLabel->setText(tr("IP: %1").arg(*ipAddressString));
 }
 
-void TimingPoint::setConnectionStatus() {
-    serverStatus->setText(tr("Server Status: %1").arg(*serverStatusString));
+void TimingPoint::setConnected() {
+    serverStatus->setText("Server Status: Connected");
+}
+
+void TimingPoint::setDisconnected() {
+    serverStatus->setText("Server Status: Disconnected");
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
+    // Set internal variable
     ipAddressString = &ip;
+
+    // Close dialog box
     dialog->accept();
+
+    // Set the IP address label
     setIpAddress();
 
-    startBackgroundThread(ip, name);
+    // Make sure we have a folder created for this timing point
+    QString subDir = *mainFolder + name + "/";
+    QDir *dir = new QDir(subDir);
+    if(!dir->exists())
+        dir->mkpath(subDir);
+
+    // Save the IP to a file
+    QFile settingsFile(subDir + ".settings");
+    settingsFile.open(QIODevice::WriteOnly);
+    QTextStream out(&settingsFile);
+    out << ip;
+    settingsFile.flush();
+    settingsFile.close();
+
+    // Start the image saving thread
+    startBackgroundThread(ip, subDir);
 }
 
-void TimingPoint::startBackgroundThread(QString ip, QString name) {
+void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
     // Start the separate thread and move the socket to it
     QThread *networkThread = new QThread();
-    MyTcpSocket *socket = new MyTcpSocket(ip, *mainFolder + name + "/");
+    MyTcpSocket *socket = new MyTcpSocket(ip, subDir);
 
     socket->moveToThread(networkThread);
 
     // Connect signals and slots
+    connect(socket, SIGNAL(connected()), this, SLOT(setConnected()));
     connect(socket, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
+    connect(socket, SIGNAL(finished()), this, SLOT(setDisconnected()));
     connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
     connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
     connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
