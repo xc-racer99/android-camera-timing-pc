@@ -44,7 +44,6 @@ void MyTcpSocket::saveImages(QString directory) {
                 }
 
                 file.close();
-                qDebug("Saved to file");
             }
         }
     }
