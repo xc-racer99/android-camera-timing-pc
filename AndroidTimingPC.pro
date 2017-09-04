@@ -6,9 +6,11 @@ SOURCES += \
     main.cpp \
     timingpoint.cpp \
     timingpointinfo.cpp \
-    mytcpsocket.cpp
+    mytcpsocket.cpp \
+    imagethread.cpp
 
 HEADERS += \
     timingpoint.h \
     timingpointinfo.h \
-    mytcpsocket.h
+    mytcpsocket.h \
+    imagethread.h

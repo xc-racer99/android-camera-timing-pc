@@ -7,7 +7,7 @@
 #include <QPushButton>
 #include <QSlider>
 
-#include "mytcpsocket.h"
+#include "imagethread.h"
 #include "timingpoint.h"
 #include "timingpointinfo.h"
 
@@ -90,9 +90,6 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     dialog->accept();
     setIpAddress();
 
-    // Start the connection
-    MyTcpSocket socket;
-    QString directory = *mainFolder;
-    socket.doConnect(ip);
-    socket.saveImages(directory);
+    ImageThread *backgroundThread = new ImageThread(ip, *mainFolder + name + "/");
+    backgroundThread->run();
 }
