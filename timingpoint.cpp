@@ -6,8 +6,9 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QSlider>
+#include <QThread>
 
-#include "imagethread.h"
+#include "mytcpsocket.h"
 #include "timingpoint.h"
 #include "timingpointinfo.h"
 
@@ -94,12 +95,21 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
 }
 
 void TimingPoint::startBackgroundThread(QString ip, QString name) {
-    // Run the getting of images in a separate thread
-    ImageThread *backgroundThread = new ImageThread(ip, *mainFolder + name + "/");
-    backgroundThread->start();
+    // Start the separate thread and move the socket to it
+    QThread *networkThread = new QThread();
+    MyTcpSocket *socket = new MyTcpSocket(ip, *mainFolder + name + "/");
+
+    socket->moveToThread(networkThread);
 
     // Connect signals and slots
-    connect(backgroundThread, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
+    connect(socket, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
+    connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
+    connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
+    connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
+    connect(networkThread, SIGNAL(finished()), networkThread, SLOT(deleteLater()));
+
+    // Start the thread
+    networkThread->start();
 }
 
 void TimingPoint::addNewImage(QString fileName) {

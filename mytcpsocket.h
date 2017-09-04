@@ -8,15 +8,16 @@ class MyTcpSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit MyTcpSocket(QObject *parent = 0);
-
-    void doConnect(QString host);
-    void saveImages(QString directory);
+    MyTcpSocket(QString host, QString dir);
 signals:
+    void finished();
     void newImage(QString filename);
 public slots:
+    void process();
 private:
     QTcpSocket *socket;
+    QString hostName;
+    QString directory;
 
     long bytesToLong(QByteArray b);
 };

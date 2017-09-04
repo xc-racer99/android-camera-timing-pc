@@ -2,23 +2,21 @@
 #include <QTcpSocket>
 #include "mytcpsocket.h"
 
-MyTcpSocket::MyTcpSocket(QObject *parent) : QObject(parent)
+MyTcpSocket::MyTcpSocket(QString host, QString dir)
 {
-
+    hostName = host;
+    directory = dir;
 }
 
-void MyTcpSocket::doConnect(QString host) {
+void MyTcpSocket::process() {
     socket = new QTcpSocket(this);
-    socket->connectToHost(host, 54321);
+    socket->connectToHost(hostName, 54321);
 
     if(socket->waitForConnected(50000)) {
-        qDebug() << tr("Connected %1").arg(host);
+        qDebug() << tr("Connected %1").arg(hostName);
     } else {
-        qDebug() << tr("Failed to connect to %1").arg(host);
+        qDebug() << tr("Failed to connect to %1").arg(hostName);
     }
-}
-
-void MyTcpSocket::saveImages(QString directory) {
     while(socket->isOpen() && socket->waitForReadyRead(-1) && socket->bytesAvailable()) {
         // Read the first 64 bits - timestamp
         QByteArray timeStampBytes = socket->read(8);
@@ -48,6 +46,7 @@ void MyTcpSocket::saveImages(QString directory) {
             }
         }
     }
+    emit finished();
 }
 
 long MyTcpSocket::bytesToLong(QByteArray b) {
