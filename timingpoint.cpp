@@ -10,6 +10,8 @@
 #include <QSlider>
 #include <QThread>
 
+#include <QtGui/QSpacerItem>
+
 #include "mytcpsocket.h"
 #include "timingpoint.h"
 #include "timingpointinfo.h"
@@ -42,6 +44,9 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
     // Add buttons
     QPushButton *nextButton = new QPushButton();
     nextButton->setText(tr("Next Person"));
+    reconnectButton = new QPushButton();
+    reconnectButton->setText(tr("Reconnect"));
+    reconnectButton->setEnabled(false);
 
     // Add line edit for bib number
     QLineEdit *bibNumEdit = new QLineEdit();
@@ -50,21 +55,28 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
     bibNumLabel->setBuddy(bibNumEdit);
 
     // Add info labels
+    timestampLabel = new QLabel(tr("Timstamp:"));
     ipAddressLabel = new QLabel();
-
     serverStatus = new QLabel("Server Status: Disconnected");
 
-    // Our layout
-    QGridLayout *layout = new QGridLayout();
-    layout->addWidget(imageHolder, 0, 0, 4, 6);
-    layout->addWidget(bibNumLabel, 0, 7, 1, 1);
-    layout->addWidget(bibNumEdit, 0, 8, 1, 1);
-    layout->addWidget(nextButton, 1, 7, 1, 2);
-    layout->addWidget(imageSlider, 5, 0, 1, 6);
-    layout->addWidget(ipAddressLabel, 4, 7, 1, 2);
-    layout->addWidget(serverStatus, 5, 7, 1, 2);
+    // A spacer
+    QSpacerItem *spacer = new QSpacerItem(40, 60, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
-    setLayout(layout);
+    // Our layout
+    QGridLayout *gridLayout = new QGridLayout();
+    gridLayout->setContentsMargins(5, 5, 5, 5);
+    gridLayout->addWidget(bibNumLabel, 1, 1, 1, 1);
+    gridLayout->addWidget(ipAddressLabel, 4, 1, 1, 2);
+    gridLayout->addItem(spacer, 3, 1, 1, 2);
+    gridLayout->addWidget(nextButton, 2, 1, 1, 2);
+    gridLayout->addWidget(serverStatus, 5, 1, 1, 2);
+    gridLayout->addWidget(bibNumEdit, 1, 2, 1, 1);
+    gridLayout->addWidget(imageHolder, 0, 0, 6, 1);
+    gridLayout->addWidget(timestampLabel, 0, 1, 1, 2);
+    gridLayout->addWidget(reconnectButton, 6, 1, 1, 2);
+    gridLayout->addWidget(imageSlider, 6, 0, 1, 1);
+
+    setLayout(gridLayout);
 
     setWindowTitle("Timing Point");
 
@@ -90,6 +102,7 @@ void TimingPoint::setConnected() {
 
 void TimingPoint::setDisconnected() {
     serverStatus->setText("Server Status: Disconnected");
+    reconnectButton->setEnabled(true);
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {

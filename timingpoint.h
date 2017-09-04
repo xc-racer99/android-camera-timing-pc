@@ -20,6 +20,8 @@ private:
     QString *serverStatusString;
     QDialog *dialog;
     QString *mainFolder;
+    QPushButton *reconnectButton;
+    QLabel *timestampLabel;
 signals:
 private slots:
     void setConnectionInfo(QString ip, QString name);
