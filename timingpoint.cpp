@@ -90,7 +90,18 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     dialog->accept();
     setIpAddress();
 
+    startBackgroundThread(ip, name);
+}
+
+void TimingPoint::startBackgroundThread(QString ip, QString name) {
     // Run the getting of images in a separate thread
     ImageThread *backgroundThread = new ImageThread(ip, *mainFolder + name + "/");
     backgroundThread->start();
+
+    // Connect signals and slots
+    connect(backgroundThread, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
+}
+
+void TimingPoint::addNewImage(QString fileName) {
+    qDebug("got new image");
 }

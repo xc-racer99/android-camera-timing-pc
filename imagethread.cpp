@@ -24,4 +24,3 @@ void ImageThread::run() {
     connect(&socket, SIGNAL(newImage(QString)), this, SIGNAL(newImage(QString)));
     exit();
 }
-
