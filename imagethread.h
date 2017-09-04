@@ -11,10 +11,11 @@ public:
 
     // overriding the QThread's run() method
     void run();
+signals:
+    void newImage(QString);
 private:
     QString ipAddress;
     QString directory;
-
 };
 
 #endif // IMAGETHREAD_H

@@ -90,6 +90,7 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     dialog->accept();
     setIpAddress();
 
+    // Run the getting of images in a separate thread
     ImageThread *backgroundThread = new ImageThread(ip, *mainFolder + name + "/");
-    backgroundThread->run();
+    backgroundThread->start();
 }

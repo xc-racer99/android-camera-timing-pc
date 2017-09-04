@@ -44,6 +44,7 @@ void MyTcpSocket::saveImages(QString directory) {
                 }
 
                 file.close();
+                emit newImage(file.fileName());
             }
         }
     }

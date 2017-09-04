@@ -13,7 +13,7 @@ public:
     void doConnect(QString host);
     void saveImages(QString directory);
 signals:
-
+    void newImage(QString filename);
 public slots:
 private:
     QTcpSocket *socket;
