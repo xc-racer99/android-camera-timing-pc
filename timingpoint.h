@@ -43,6 +43,7 @@ private slots:
     // Image-related handlers
     void startBackgroundThread(QString ip, QString name);
     void addNewImage(QString fileName);
+    void changeImage(int index);
 public slots:
 };
 

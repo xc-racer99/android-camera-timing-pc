@@ -62,6 +62,7 @@ void TimingPoint::commonSetupCode(QString directory) {
     imageSlider->setMinimum(0);
     imageSlider->setMaximum(1);
     imageSlider->setOrientation(Qt::Horizontal);
+    imageSlider->setTracking(false);
 
     // Add buttons
     QPushButton *nextButton = new QPushButton();
@@ -107,6 +108,9 @@ void TimingPoint::commonSetupCode(QString directory) {
     // Button connections
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
     connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
+
+    // Slider connection
+    connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(changeImage(int)));
 }
 
 void TimingPoint::setIpAddress() {
@@ -140,6 +144,11 @@ void TimingPoint::reconnectToServer() {
     startBackgroundThread(ipAddressString, subDirectory);
 }
 
+void TimingPoint::changeImage(int index) {
+    QImage image(imagePaths.at(index));
+    imageHolder->setPixmap(QPixmap::fromImage(image));
+}
+
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
     // Set internal variable
     ipAddressString = ip;
@@ -167,7 +176,15 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     // Create a list of images already present
     QDir subDir(subDirectory);
     QStringList filter("*.jpg");
-    imagePaths = subDir.entryList(filter, QDir::Files);
+    QFileInfoList initialFileInfo = subDir.entryInfoList(filter, QDir::Files, QDir::Name);
+    for(int i = 0; i < initialFileInfo.length(); i++)
+        imagePaths.append(initialFileInfo.at(i).absoluteFilePath());
+
+    // Set the initial image if we already have images
+    if(imagePaths.length() > 0) {
+        imageSlider->setSliderPosition(imagePaths.length() - 1);
+        changeImage(imagePaths.length() - 1);
+    }
 
     // Set the image slider length to the number of images we have
     imageSlider->setMaximum(imagePaths.length() - 1);
