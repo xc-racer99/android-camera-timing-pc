@@ -126,9 +126,11 @@ void TimingPoint::submitButtonPushed() {
     QString time = actualTimestamp->text();
     QString bibNumber = bibNumEdit->text();
 
-    QTextStream out(csvFile);
-    out << time + "," + bibNumber + "\n";
-    csvFile->flush();
+    if(!bibNumber.isEmpty()) {
+        QTextStream out(csvFile);
+        out << time + "," + bibNumber + "\n";
+        csvFile->flush();
+    }
 
     // Switch to the next image
     int temp = imageSlider->value() + 1;
@@ -267,7 +269,6 @@ void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
 }
 
 void TimingPoint::addNewImage(QString fileName) {
-    qDebug("got new image");
     // Add the new image to the list of paths
     imagePaths.append(fileName);
 
