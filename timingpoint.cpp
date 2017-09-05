@@ -66,7 +66,7 @@ void TimingPoint::commonSetupCode(QString directory) {
     imageSlider->setTracking(false);
 
     // Add buttons
-    QPushButton *nextButton = new QPushButton();
+    nextButton = new QPushButton();
     nextButton->setText(tr("Next Person"));
     reconnectButton = new QPushButton();
     reconnectButton->setText(tr("Reconnect"));
@@ -76,13 +76,14 @@ void TimingPoint::commonSetupCode(QString directory) {
     changeIpButton->setEnabled(false);
 
     // Add line edit for bib number
-    QLineEdit *bibNumEdit = new QLineEdit();
+    bibNumEdit = new QLineEdit();
     QLabel *bibNumLabel = new QLabel();
     bibNumLabel->setText(tr("Bib Number:"));
     bibNumLabel->setBuddy(bibNumEdit);
 
     // Add info labels
     timestampLabel = new QLabel(tr("Timstamp:"));
+    actualTimestamp = new QLabel("");
     ipAddressLabel = new QLabel();
     serverStatus = new QLabel("Server Status: Disconnected");
 
@@ -94,7 +95,7 @@ void TimingPoint::commonSetupCode(QString directory) {
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->setContentsMargins(5, 5, 5, 5);
     gridLayout->addWidget(ipAddressLabel, 4, 2, 1, 2);
-    gridLayout->addWidget(timestampLabel, 0, 2, 1, 2);
+    gridLayout->addWidget(timestampLabel, 0, 2, 1, 1);
     gridLayout->addWidget(reconnectButton, 6, 2, 1, 2);
     gridLayout->addItem(spacer, 3, 2, 1, 2);
     gridLayout->addWidget(bibNumEdit, 1, 3, 1, 1);
@@ -104,6 +105,7 @@ void TimingPoint::commonSetupCode(QString directory) {
     gridLayout->addWidget(bibNumLabel, 1, 2, 1, 1);
     gridLayout->addWidget(imageSlider, 6, 0, 1, 1);
     gridLayout->addItem(horizSpacer, 0, 1, 7, 1);
+    gridLayout->addWidget(actualTimestamp, 0, 3, 1, 1);
 
     setLayout(gridLayout);
 
@@ -113,10 +115,6 @@ void TimingPoint::commonSetupCode(QString directory) {
 
     // Slider connection
     connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(changeImage(int)));
-}
-
-void TimingPoint::setTimestamp(QString time) {
-    timestampLabel->setText("Timestamp: " + time);
 }
 
 void TimingPoint::setIpAddress() {
@@ -163,10 +161,17 @@ void TimingPoint::changeImage(int index) {
     qint64 temp = rawTimestamp.toLongLong(&ok);
     if(ok) {
         QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
-        setTimestamp(time.time().toString());
+        actualTimestamp->setText(time.time().toString());
+        // Enable the next button
+        nextButton->setEnabled(true);
     } else {
-        setTimestamp("");
+        actualTimestamp->setText("");
+        // Disable the next button
+        nextButton->setEnabled(false);
     }
+
+    // If we've already written a bib number, show it in the Line Edit
+    bibNumEdit->setText("");
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
@@ -208,6 +213,10 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
 
     // Set the image slider length to the number of images we have
     imageSlider->setMaximum(imagePaths.length() - 1);
+
+    // Create the csv file that we read from and write to
+    csvFile = new QFile(subDirectory + "output.csv");
+    csvFile->open(QFile::Append | QFile::ReadOnly);
 
     // Start the image saving thread
     startBackgroundThread(ip, subDirectory);

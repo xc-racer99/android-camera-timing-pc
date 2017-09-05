@@ -5,6 +5,8 @@
 #include <QSlider>
 #include <QLabel>
 #include <QDialog>
+#include <QLineEdit>
+#include <QFile>
 
 class TimingPoint : public QWidget
 {
@@ -25,8 +27,12 @@ private:
     QString subDirectory;
     QPushButton *reconnectButton;
     QPushButton *changeIpButton;
+    QPushButton *nextButton;
     QLabel *timestampLabel;
+    QLabel *actualTimestamp;
     QStringList imagePaths;
+    QLineEdit *bibNumEdit;
+    QFile *csvFile;
 signals:
 private slots:
     void setConnectionInfo(QString ip, QString name);
@@ -35,7 +41,6 @@ private slots:
     void setIpAddress();
     void setConnected();
     void setDisconnected();
-    void setTimestamp(QString time);
 
     // Button handlers
     void reconnectToServer();
