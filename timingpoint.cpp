@@ -85,23 +85,24 @@ void TimingPoint::commonSetupCode(QString directory) {
     ipAddressLabel = new QLabel();
     serverStatus = new QLabel("Server Status: Disconnected");
 
-    // A spacer
+    // Spacers
     QSpacerItem *spacer = new QSpacerItem(40, 60, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QSpacerItem *horizSpacer = new QSpacerItem(5, 60, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
     // Our layout
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->setContentsMargins(5, 5, 5, 5);
-    gridLayout->addWidget(bibNumLabel, 1, 1, 1, 1);
-    gridLayout->addWidget(ipAddressLabel, 4, 1, 1, 2);
-    gridLayout->addItem(spacer, 3, 1, 1, 2);
-    gridLayout->addWidget(nextButton, 2, 1, 1, 2);
-    gridLayout->addWidget(serverStatus, 5, 1, 1, 2);
-    gridLayout->addWidget(bibNumEdit, 1, 2, 1, 1);
+    gridLayout->addWidget(ipAddressLabel, 4, 2, 1, 2);
+    gridLayout->addWidget(timestampLabel, 0, 2, 1, 2);
+    gridLayout->addWidget(reconnectButton, 6, 2, 1, 2);
+    gridLayout->addItem(spacer, 3, 2, 1, 2);
+    gridLayout->addWidget(bibNumEdit, 1, 3, 1, 1);
+    gridLayout->addWidget(serverStatus, 5, 2, 1, 2);
+    gridLayout->addWidget(nextButton, 2, 2, 1, 2);
     gridLayout->addWidget(imageHolder, 0, 0, 6, 1);
-    gridLayout->addWidget(timestampLabel, 0, 1, 1, 2);
-    gridLayout->addWidget(reconnectButton, 6, 1, 1, 1);
-    gridLayout->addWidget(changeIpButton, 6, 2, 1, 1);
+    gridLayout->addWidget(bibNumLabel, 1, 2, 1, 1);
     gridLayout->addWidget(imageSlider, 6, 0, 1, 1);
+    gridLayout->addItem(horizSpacer, 0, 1, 7, 1);
 
     setLayout(gridLayout);
 
