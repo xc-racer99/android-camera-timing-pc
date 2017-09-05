@@ -112,9 +112,30 @@ void TimingPoint::commonSetupCode(QString directory) {
     // Button connections
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
     connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
+    connect(nextButton, SIGNAL(clicked(bool)), this, SLOT(submitButtonPushed()));
+
+    // When pushing enter on the bib number, pretend the next button was pushed
+    connect(bibNumEdit, SIGNAL(returnPressed()), this, SLOT(submitButtonPushed()));
 
     // Slider connection
     connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(changeImage(int)));
+}
+
+void TimingPoint::submitButtonPushed() {
+    // Write the time and bib number to the CSV
+    QString time = actualTimestamp->text();
+    QString bibNumber = bibNumEdit->text();
+
+    QTextStream out(csvFile);
+    out << time + "," + bibNumber + "\n";
+    csvFile->flush();
+
+    // Switch to the next image
+    int temp = imageSlider->value() + 1;
+    if (temp <= imageSlider->maximum()) {
+        changeImage(temp);
+        imageSlider->setValue(temp);
+    }
 }
 
 void TimingPoint::setIpAddress() {
@@ -172,6 +193,9 @@ void TimingPoint::changeImage(int index) {
 
     // If we've already written a bib number, show it in the Line Edit
     bibNumEdit->setText("");
+
+    // Change the focus
+    bibNumEdit->setFocus();
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {

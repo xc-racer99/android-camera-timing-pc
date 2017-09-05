@@ -45,6 +45,7 @@ private slots:
     // Button handlers
     void reconnectToServer();
     void changeIpDialog();
+    void submitButtonPushed();
 
     // Image-related handlers
     void startBackgroundThread(QString ip, QString name);
