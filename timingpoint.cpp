@@ -106,6 +106,8 @@ void TimingPoint::setIpAddress() {
 
 void TimingPoint::setConnected() {
     serverStatus->setText("Server Status: Connected");
+    reconnectButton->setEnabled(false);
+    changeIpButton->setEnabled(false);
 }
 
 void TimingPoint::setDisconnected() {
