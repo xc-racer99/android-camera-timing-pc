@@ -1,3 +1,4 @@
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -114,6 +115,10 @@ void TimingPoint::commonSetupCode(QString directory) {
     connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(changeImage(int)));
 }
 
+void TimingPoint::setTimestamp(QString time) {
+    timestampLabel->setText("Timestamp: " + time);
+}
+
 void TimingPoint::setIpAddress() {
     ipAddressLabel->setText(tr("IP: %1").arg(ipAddressString));
 }
@@ -148,6 +153,20 @@ void TimingPoint::reconnectToServer() {
 void TimingPoint::changeImage(int index) {
     QImage image(imagePaths.at(index));
     imageHolder->setPixmap(QPixmap::fromImage(image));
+
+    // Update the timestamp
+    QFileInfo pic = imagePaths.at(index);
+    QString rawTimestamp = pic.baseName();
+
+    //Convert the raw timestamp to user-readable string
+    bool ok;
+    qint64 temp = rawTimestamp.toLongLong(&ok);
+    if(ok) {
+        QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
+        setTimestamp(time.time().toString());
+    } else {
+        setTimestamp("");
+    }
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {

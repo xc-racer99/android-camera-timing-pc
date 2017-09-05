@@ -31,10 +31,11 @@ signals:
 private slots:
     void setConnectionInfo(QString ip, QString name);
 
-    // Server status handlers
+    // Status handlers
     void setIpAddress();
     void setConnected();
     void setDisconnected();
+    void setTimestamp(QString time);
 
     // Button handlers
     void reconnectToServer();
