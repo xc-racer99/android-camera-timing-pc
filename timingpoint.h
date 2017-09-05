@@ -16,18 +16,27 @@ private:
     QSlider *imageSlider;
     QLabel *serverStatus;
     QLabel *ipAddressLabel;
-    QString *ipAddressString;
-    QString *serverStatusString;
+    QString ipAddressString;
     QDialog *dialog;
     QString *mainFolder;
+    QString subDirectory;
     QPushButton *reconnectButton;
+    QPushButton *changeIpButton;
     QLabel *timestampLabel;
 signals:
 private slots:
     void setConnectionInfo(QString ip, QString name);
+
+    // Server status handlers
     void setIpAddress();
     void setConnected();
     void setDisconnected();
+
+    // Button handlers
+    void reconnectToServer();
+    void changeIpDialog();
+
+    // Image-related handlers
     void startBackgroundThread(QString ip, QString name);
     void addNewImage(QString fileName);
 public slots:

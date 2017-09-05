@@ -3,6 +3,7 @@
 #include <QFileDialog>
 #include <QGridLayout>
 #include <QImage>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPixmap>
@@ -22,8 +23,7 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
     mainFolder = &directory;
 
     // Create our strings
-    ipAddressString = new QString("0.0.0.0");
-    serverStatusString = new QString("Disconnected");
+    ipAddressString = "0.0.0.0";
 
     // Setup a QLabel which holds the image
     imageHolder = new QLabel;
@@ -47,6 +47,9 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
     reconnectButton = new QPushButton();
     reconnectButton->setText(tr("Reconnect"));
     reconnectButton->setEnabled(false);
+    changeIpButton = new QPushButton();
+    changeIpButton->setText(tr("Change IP"));
+    changeIpButton->setEnabled(false);
 
     // Add line edit for bib number
     QLineEdit *bibNumEdit = new QLineEdit();
@@ -73,12 +76,17 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
     gridLayout->addWidget(bibNumEdit, 1, 2, 1, 1);
     gridLayout->addWidget(imageHolder, 0, 0, 6, 1);
     gridLayout->addWidget(timestampLabel, 0, 1, 1, 2);
-    gridLayout->addWidget(reconnectButton, 6, 1, 1, 2);
+    gridLayout->addWidget(reconnectButton, 6, 1, 1, 1);
+    gridLayout->addWidget(changeIpButton, 6, 2, 1, 1);
     gridLayout->addWidget(imageSlider, 6, 0, 1, 1);
 
     setLayout(gridLayout);
 
     setWindowTitle("Timing Point");
+
+    // Button connections
+    connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
+    connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
 
     // Create a dialog asking for connection info
     dialog = new QDialog(this);
@@ -93,7 +101,7 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
 }
 
 void TimingPoint::setIpAddress() {
-    ipAddressLabel->setText(tr("IP: %1").arg(*ipAddressString));
+    ipAddressLabel->setText(tr("IP: %1").arg(ipAddressString));
 }
 
 void TimingPoint::setConnected() {
@@ -103,11 +111,28 @@ void TimingPoint::setConnected() {
 void TimingPoint::setDisconnected() {
     serverStatus->setText("Server Status: Disconnected");
     reconnectButton->setEnabled(true);
+    changeIpButton->setEnabled(true);
+}
+
+void TimingPoint::changeIpDialog() {
+    bool ok;
+    QString newIp = QInputDialog::getText(this, tr("Enter new IP"), tr("IP:"), QLineEdit::Normal, ipAddressString, &ok);
+
+    // Update the ip address shown
+    if(ok && !newIp.isEmpty()) {
+        ipAddressString = newIp;
+        setIpAddress();
+    }
+}
+
+void TimingPoint::reconnectToServer() {
+    startBackgroundThread(ipAddressString, subDirectory);
+    qDebug("got here");
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
     // Set internal variable
-    ipAddressString = &ip;
+    ipAddressString = ip;
 
     // Close dialog box
     dialog->accept();
@@ -116,13 +141,13 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     setIpAddress();
 
     // Make sure we have a folder created for this timing point
-    QString subDir = *mainFolder + name + "/";
-    QDir *dir = new QDir(subDir);
+    subDirectory = *mainFolder + name + "/";
+    QDir *dir = new QDir(subDirectory);
     if(!dir->exists())
-        dir->mkpath(subDir);
+        dir->mkpath(subDirectory);
 
     // Save the IP to a file
-    QFile settingsFile(subDir + ".settings");
+    QFile settingsFile(subDirectory + ".settings");
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
     out << ip;
@@ -130,7 +155,7 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     settingsFile.close();
 
     // Start the image saving thread
-    startBackgroundThread(ip, subDir);
+    startBackgroundThread(ip, subDirectory);
 }
 
 void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
