@@ -17,10 +17,32 @@
 #include "timingpoint.h"
 #include "timingpointinfo.h"
 
+TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QWidget(parent)
+{
+    commonSetupCode(directory);
+
+    setConnectionInfo(ip, name);
+}
+
 TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
 {
+    commonSetupCode(directory);
+
+    // Create a dialog asking for connection info
+    dialog = new QDialog(this);
+    dialog->setFixedSize(210, 110);
+    TimingPointInfo info(dialog);
+
+    // Connect things together
+    connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(setConnectionInfo(QString,QString)));
+
+    // Show the dialog
+    dialog->exec();
+}
+
+void TimingPoint::commonSetupCode(QString directory) {
     // Pass the directory along
-    mainFolder = &directory;
+    mainFolder = directory;
 
     // Create our strings
     ipAddressString = "0.0.0.0";
@@ -82,22 +104,9 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
 
     setLayout(gridLayout);
 
-    setWindowTitle("Timing Point");
-
     // Button connections
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
     connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
-
-    // Create a dialog asking for connection info
-    dialog = new QDialog(this);
-    dialog->setFixedSize(210, 110);
-    TimingPointInfo info(dialog);
-
-    // Connect things together
-    connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(setConnectionInfo(QString,QString)));
-
-    // Show the dialog
-    dialog->exec();
 }
 
 void TimingPoint::setIpAddress() {
@@ -129,7 +138,6 @@ void TimingPoint::changeIpDialog() {
 
 void TimingPoint::reconnectToServer() {
     startBackgroundThread(ipAddressString, subDirectory);
-    qDebug("got here");
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
@@ -143,7 +151,7 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     setIpAddress();
 
     // Make sure we have a folder created for this timing point
-    subDirectory = *mainFolder + name + "/";
+    subDirectory = mainFolder + name + "/";
     QDir *dir = new QDir(subDirectory);
     if(!dir->exists())
         dir->mkpath(subDirectory);
@@ -155,6 +163,14 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     out << ip;
     settingsFile.flush();
     settingsFile.close();
+
+    // Create a list of images already present
+    QDir subDir(subDirectory);
+    QStringList filter("*.jpg");
+    imagePaths = subDir.entryList(filter, QDir::Files);
+
+    // Set the image slider length to the number of images we have
+    imageSlider->setMaximum(imagePaths.length() - 1);
 
     // Start the image saving thread
     startBackgroundThread(ip, subDirectory);
@@ -182,4 +198,9 @@ void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
 
 void TimingPoint::addNewImage(QString fileName) {
     qDebug("got new image");
+    // Add the new image to the list of paths
+    imagePaths.append(fileName);
+
+    // Increment the slider's maximum
+    imageSlider->setMaximum(imageSlider->maximum() + 1);
 }
