@@ -12,3 +12,6 @@ HEADERS += \
     timingpoint.h \
     timingpointinfo.h \
     mytcpsocket.h
+
+RESOURCES += \
+    images.qrc

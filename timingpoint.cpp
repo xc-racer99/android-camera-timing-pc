@@ -51,11 +51,12 @@ void TimingPoint::commonSetupCode(QString directory) {
     // Setup a QLabel which holds the image
     imageHolder = new QLabel;
     imageHolder->setBackgroundRole(QPalette::Base);
+    imageHolder->setMaximumHeight(512);
     imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     imageHolder->setScaledContents(true);
 
     // Choose our image
-    QImage image("/home/jon/Firefox_wallpaper.png");
+    QImage image(":/images/images/No_image.png");
     imageHolder->setPixmap(QPixmap::fromImage(image));
 
     // Scroll bar to switch among images
@@ -235,10 +236,12 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
     if(imagePaths.length() > 0) {
         imageSlider->setSliderPosition(imagePaths.length() - 1);
         changeImage(imagePaths.length() - 1);
-    }
 
-    // Set the image slider length to the number of images we have
-    imageSlider->setMaximum(imagePaths.length() - 1);
+        // Set the image slider length to the number of images we have
+        imageSlider->setMaximum(imagePaths.length() - 1);
+    } else {
+        imageSlider->setMaximum(0);
+    }
 
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
