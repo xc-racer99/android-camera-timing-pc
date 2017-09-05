@@ -21,7 +21,6 @@
 TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QWidget(parent)
 {
     commonSetupCode(directory);
-
     setConnectionInfo(ip, name);
 }
 
@@ -35,7 +34,7 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
     TimingPointInfo info(dialog);
 
     // Connect things together
-    connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(setConnectionInfo(QString,QString)));
+    connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(gotConnectionInfo(QString,QString)));
 
     // Show the dialog
     dialog->exec();
@@ -165,6 +164,14 @@ void TimingPoint::changeIpDialog() {
     if(ok && !newIp.isEmpty()) {
         ipAddressString = newIp;
         setIpAddress();
+
+        // Modify the .settings file
+        QFile settingsFile(subDirectory + ".settings");
+        settingsFile.open(QIODevice::WriteOnly);
+        QTextStream out(&settingsFile);
+        out << ipAddressString;
+        settingsFile.flush();
+        settingsFile.close();
     }
 }
 
@@ -201,12 +208,16 @@ void TimingPoint::changeImage(int index) {
     bibNumEdit->setFocus();
 }
 
+void TimingPoint::gotConnectionInfo(QString ip, QString name) {
+    // Close dialog box
+    dialog->accept();
+
+    setConnectionInfo(ip, name);
+}
+
 void TimingPoint::setConnectionInfo(QString ip, QString name) {
     // Set internal variable
     ipAddressString = ip;
-
-    // Close dialog box
-    dialog->accept();
 
     // Set the IP address label
     setIpAddress();

@@ -16,6 +16,7 @@ public:
     explicit TimingPoint(QString directory, QString name, QString ip, QWidget *parent = 0);
 private:
     void commonSetupCode(QString directory);
+    void setConnectionInfo(QString ip, QString name);
 
     QLabel *imageHolder;
     QSlider *imageSlider;
@@ -35,7 +36,7 @@ private:
     QFile *csvFile;
 signals:
 private slots:
-    void setConnectionInfo(QString ip, QString name);
+    void gotConnectionInfo(QString ip, QString name);
 
     // Status handlers
     void setIpAddress();
