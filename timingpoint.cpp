@@ -35,6 +35,7 @@ TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
 
     // Connect things together
     connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(gotConnectionInfo(QString,QString)));
+    connect(dialog, SIGNAL(rejected()), this, SLOT(noConnectionInfo()));
 
     // Show the dialog
     dialog->exec();
@@ -220,6 +221,11 @@ void TimingPoint::gotConnectionInfo(QString ip, QString name) {
     dialog->accept();
 
     setConnectionInfo(ip, name);
+}
+
+void TimingPoint::noConnectionInfo() {
+    // The user cancelled the creation, use a default "Finish" and IP 127.0.0.1
+    setConnectionInfo("127.0.0.1", "Finish");
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {

@@ -37,6 +37,7 @@ private:
 signals:
 private slots:
     void gotConnectionInfo(QString ip, QString name);
+    void noConnectionInfo();
 
     // Status handlers
     void setIpAddress();
