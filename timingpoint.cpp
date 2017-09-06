@@ -182,6 +182,7 @@ void TimingPoint::changeImage(int index) {
     QImage image(imagePaths.at(index));
     QImage scaledImage = image.scaledToHeight(512);
     imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
+    imageHolder->setMaximumSize(scaledImage.width(), scaledImage.height());
 
     // Update the timestamp
     QFileInfo pic = imagePaths.at(index);
