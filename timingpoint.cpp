@@ -52,16 +52,10 @@ void TimingPoint::commonSetupCode(QString directory) {
     imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     imageHolder->setScaledContents(true);
 
-    // Choose our image
-    QImage image(":/images/images/No_image.png");
-    QImage scaledImage = image.scaledToHeight(512);
-    imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
-    imageHolder->setFixedSize(scaledImage.width(), scaledImage.height());
-
     // Scroll bar to switch among images
     imageSlider = new QSlider();
     imageSlider->setMinimum(0);
-    imageSlider->setMaximum(1);
+    imageSlider->setMaximum(0);
     imageSlider->setOrientation(Qt::Horizontal);
     imageSlider->setTracking(false);
 
@@ -86,6 +80,10 @@ void TimingPoint::commonSetupCode(QString directory) {
     actualTimestamp = new QLabel("");
     ipAddressLabel = new QLabel();
     serverStatus = new QLabel("Server Status: Disconnected");
+
+    // Choose our blank image
+    imagePaths.append(":/images/images/No_image.png");
+    changeImage(0);
 
     // Our layout
     QGridLayout *gridLayout = new QGridLayout();
@@ -251,14 +249,11 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
         imagePaths.append(initialFileInfo.at(i).absoluteFilePath());
 
     // Set the initial image if we already have images
-    if(imagePaths.length() > 0) {
-        imageSlider->setSliderPosition(imagePaths.length() - 1);
-        changeImage(imagePaths.length() - 1);
-
+    if(imagePaths.length() > 1) {
         // Set the image slider length to the number of images we have
         imageSlider->setMaximum(imagePaths.length() - 1);
-    } else {
-        imageSlider->setMaximum(0);
+        imageSlider->setSliderPosition(imagePaths.length() - 1);
+        changeImage(imagePaths.length() - 1);
     }
 
     // Create the csv file that we read from and write to
