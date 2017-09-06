@@ -12,8 +12,6 @@
 #include <QSlider>
 #include <QThread>
 
-#include <QtGui/QSpacerItem>
-
 #include "mytcpsocket.h"
 #include "timingpoint.h"
 #include "timingpointinfo.h"
@@ -89,10 +87,6 @@ void TimingPoint::commonSetupCode(QString directory) {
     ipAddressLabel = new QLabel();
     serverStatus = new QLabel("Server Status: Disconnected");
 
-    // Spacers
-    QSpacerItem *spacer = new QSpacerItem(40, 60, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QSpacerItem *horizSpacer = new QSpacerItem(5, 60, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
     // Our layout
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->setContentsMargins(5, 5, 5, 5);
@@ -100,15 +94,15 @@ void TimingPoint::commonSetupCode(QString directory) {
     gridLayout->addWidget(timestampLabel, 0, 2, 1, 1);
     gridLayout->addWidget(reconnectButton, 6, 2, 1, 1);
     gridLayout->addWidget(changeIpButton, 6, 3, 1, 1);
-    gridLayout->addItem(spacer, 3, 2, 1, 2);
     gridLayout->addWidget(bibNumEdit, 1, 3, 1, 1);
     gridLayout->addWidget(serverStatus, 5, 2, 1, 2);
     gridLayout->addWidget(nextButton, 2, 2, 1, 2);
     gridLayout->addWidget(imageHolder, 0, 0, 6, 1);
     gridLayout->addWidget(bibNumLabel, 1, 2, 1, 1);
     gridLayout->addWidget(imageSlider, 6, 0, 1, 1);
-    gridLayout->addItem(horizSpacer, 0, 1, 7, 1);
     gridLayout->addWidget(actualTimestamp, 0, 3, 1, 1);
+    gridLayout->setRowStretch(3, 10);
+    gridLayout->setColumnStretch(1, 10);
 
     setLayout(gridLayout);
 
