@@ -7,8 +7,9 @@
 #include <QDialog>
 #include <QLineEdit>
 #include <QFile>
+#include <QGroupBox>
 
-class TimingPoint : public QWidget
+class TimingPoint : public QGroupBox
 {
     Q_OBJECT
 public:

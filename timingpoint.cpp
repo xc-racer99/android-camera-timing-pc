@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QGridLayout>
+#include <QGroupBox>
 #include <QImage>
 #include <QInputDialog>
 #include <QLabel>
@@ -16,13 +17,13 @@
 #include "timingpoint.h"
 #include "timingpointinfo.h"
 
-TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QWidget(parent)
+TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QGroupBox(parent)
 {
     commonSetupCode(directory);
     setConnectionInfo(ip, name);
 }
 
-TimingPoint::TimingPoint(QString directory, QWidget *parent) : QWidget(parent)
+TimingPoint::TimingPoint(QString directory, QWidget *parent) : QGroupBox(parent)
 {
     commonSetupCode(directory);
 
@@ -225,6 +226,9 @@ void TimingPoint::setConnectionInfo(QString ip, QString name) {
 
     // Set the IP address label
     setIpAddress();
+
+    // Set the title
+    setTitle(name);
 
     // Make sure we have a folder created for this timing point
     subDirectory = mainFolder + name + "/";
