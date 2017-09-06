@@ -179,9 +179,8 @@ void TimingPoint::reconnectToServer() {
 
 void TimingPoint::changeImage(int index) {
     QImage image(imagePaths.at(index));
-    int width = (image.width()/image.height()) * 512;
-    imageHolder->setFixedSize(width, 512);
-    imageHolder->setPixmap(QPixmap::fromImage(image));
+    QImage scaledImage = image.scaledToHeight(512);
+    imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
 
     // Update the timestamp
     QFileInfo pic = imagePaths.at(index);
