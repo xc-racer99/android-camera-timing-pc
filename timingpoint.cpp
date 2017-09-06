@@ -50,13 +50,14 @@ void TimingPoint::commonSetupCode(QString directory) {
     // Setup a QLabel which holds the image
     imageHolder = new QLabel;
     imageHolder->setBackgroundRole(QPalette::Base);
-    imageHolder->setMaximumHeight(512);
     imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     imageHolder->setScaledContents(true);
 
     // Choose our image
     QImage image(":/images/images/No_image.png");
-    imageHolder->setPixmap(QPixmap::fromImage(image));
+    QImage scaledImage = image.scaledToHeight(512);
+    imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
+    imageHolder->setFixedSize(scaledImage.width(), scaledImage.height());
 
     // Scroll bar to switch among images
     imageSlider = new QSlider();
@@ -96,7 +97,8 @@ void TimingPoint::commonSetupCode(QString directory) {
     gridLayout->setContentsMargins(5, 5, 5, 5);
     gridLayout->addWidget(ipAddressLabel, 4, 2, 1, 2);
     gridLayout->addWidget(timestampLabel, 0, 2, 1, 1);
-    gridLayout->addWidget(reconnectButton, 6, 2, 1, 2);
+    gridLayout->addWidget(reconnectButton, 6, 2, 1, 1);
+    gridLayout->addWidget(changeIpButton, 6, 3, 1, 1);
     gridLayout->addItem(spacer, 3, 2, 1, 2);
     gridLayout->addWidget(bibNumEdit, 1, 3, 1, 1);
     gridLayout->addWidget(serverStatus, 5, 2, 1, 2);
@@ -181,6 +183,8 @@ void TimingPoint::reconnectToServer() {
 
 void TimingPoint::changeImage(int index) {
     QImage image(imagePaths.at(index));
+    int width = (image.width()/image.height()) * 512;
+    imageHolder->setFixedSize(width, 512);
     imageHolder->setPixmap(QPixmap::fromImage(image));
 
     // Update the timestamp

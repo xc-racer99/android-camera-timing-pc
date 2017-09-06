@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
+#include <QScrollArea>
 #include <QTextStream>
 
 #include "mainwindow.h"
@@ -43,10 +44,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(actionQuit, SIGNAL(triggered(bool)), this, SLOT(quit()));
 
     // Create the layout
-    layout = new QVBoxLayout;
-    QWidget *centralWidget = new QWidget;
-    centralWidget->setLayout(layout);
-    setCentralWidget(centralWidget);
+    QScrollArea *scrollArea = new QScrollArea();
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    QWidget *container = new QWidget(scrollArea);
+    scrollArea->setWidget(container);
+    layout = new QVBoxLayout(container);
+    setCentralWidget(scrollArea);
 
     // Check and see if we're opening a folder that's already been in use
     QDir dir(directory);
@@ -70,8 +74,8 @@ void MainWindow::quit() {
 }
 
 void MainWindow::newTimingPoint() {
-        TimingPoint *tPoint = new TimingPoint(directory);
-        layout->addWidget(tPoint);
+    TimingPoint *tPoint = new TimingPoint(directory);
+    layout->addWidget(tPoint);
 }
 
 void MainWindow::newTimingPoint(QString name, QString ip) {
