@@ -9,6 +9,11 @@ class MyTcpSocket : public QObject
     Q_OBJECT
 public:
     MyTcpSocket(QString host, QString dir);
+    ~MyTcpSocket()
+    {
+        socket->close();
+    }
+
 signals:
     void finished();
     void newImage(QString filename);
