@@ -128,9 +128,12 @@ void TimingPoint::submitButtonPushed() {
     QString time = actualTimestamp->text();
     QString bibNumber = bibNumEdit->text();
 
-    if(!bibNumber.isEmpty()) {
-        QTextStream out(csvFile);
-        out << time + "," + bibNumber + "\n";
+    // Divide up the bib numbers if there's multiple separated by a comma
+    QStringList bibNums = bibNumber.split(',', QString::SkipEmptyParts);
+
+    QTextStream out(csvFile);
+    for(int i = 0; i < bibNums.length(); i++) {
+        out << time + "," + bibNums.at(i) + "\n";
         csvFile->flush();
     }
 
