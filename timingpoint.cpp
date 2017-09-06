@@ -6,6 +6,7 @@
 #include <QGroupBox>
 #include <QImage>
 #include <QInputDialog>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPixmap>
@@ -53,12 +54,21 @@ void TimingPoint::commonSetupCode(QString directory) {
     imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     imageHolder->setScaledContents(true);
 
-    // Scroll bar to switch among images
+    // Slider to switch among images
     imageSlider = new QSlider();
     imageSlider->setMinimum(0);
     imageSlider->setMaximum(0);
     imageSlider->setOrientation(Qt::Horizontal);
     imageSlider->setTracking(false);
+
+    // Add buttons on each end of the slider
+    QPushButton *minusButton = new QPushButton();
+    minusButton->setIcon(QIcon(":/images/images/minus-icon.png"));
+    minusButton->setIconSize(QSize(25, 25));
+
+    QPushButton *plusButton = new QPushButton();
+    plusButton->setIcon(QIcon(":/images/images/plus-icon.png"));
+    plusButton->setIconSize(QSize(25, 25));
 
     // Add buttons
     nextButton = new QPushButton();
@@ -89,19 +99,23 @@ void TimingPoint::commonSetupCode(QString directory) {
     // Our layout
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->setContentsMargins(5, 5, 5, 5);
-    gridLayout->addWidget(ipAddressLabel, 4, 2, 1, 2);
-    gridLayout->addWidget(timestampLabel, 0, 2, 1, 1);
-    gridLayout->addWidget(reconnectButton, 6, 2, 1, 1);
-    gridLayout->addWidget(changeIpButton, 6, 3, 1, 1);
-    gridLayout->addWidget(bibNumEdit, 1, 3, 1, 1);
-    gridLayout->addWidget(serverStatus, 5, 2, 1, 2);
-    gridLayout->addWidget(nextButton, 2, 2, 1, 2);
-    gridLayout->addWidget(imageHolder, 0, 0, 6, 1);
-    gridLayout->addWidget(bibNumLabel, 1, 2, 1, 1);
-    gridLayout->addWidget(imageSlider, 6, 0, 1, 1);
-    gridLayout->addWidget(actualTimestamp, 0, 3, 1, 1);
+
+    gridLayout->addWidget(plusButton, 6, 2, 1, 1);
+    gridLayout->addWidget(timestampLabel, 0, 4, 1, 1);
+    gridLayout->addWidget(ipAddressLabel, 4, 4, 1, 2);
+    gridLayout->addWidget(bibNumEdit, 1, 5, 1, 1);
+    gridLayout->addWidget(serverStatus, 5, 4, 1, 2);
+    gridLayout->addWidget(nextButton, 2, 4, 1, 2);
+    gridLayout->addWidget(bibNumLabel, 1, 4, 1, 1);
+    gridLayout->addWidget(imageSlider, 6, 1, 1, 1);
+    gridLayout->addWidget(actualTimestamp, 0, 5, 1, 1);
+    gridLayout->addWidget(minusButton, 6, 0, 1, 1);
+    gridLayout->addWidget(imageHolder, 0, 0, 6, 3);
+    gridLayout->addWidget(reconnectButton, 6, 4, 1, 1);
+    gridLayout->addWidget(changeIpButton, 6, 5, 1, 1);
+
     gridLayout->setRowStretch(3, 10);
-    gridLayout->setColumnStretch(1, 10);
+    gridLayout->setColumnStretch(3, 10);
 
     setLayout(gridLayout);
 
@@ -109,6 +123,8 @@ void TimingPoint::commonSetupCode(QString directory) {
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
     connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
     connect(nextButton, SIGNAL(clicked(bool)), this, SLOT(submitButtonPushed()));
+    connect(plusButton, SIGNAL(clicked(bool)), this, SLOT(plusButtonPushed()));
+    connect(minusButton, SIGNAL(clicked(bool)), this, SLOT(minusButtonPushed()));
 
     // When pushing enter on the bib number, pretend the next button was pushed
     connect(bibNumEdit, SIGNAL(returnPressed()), this, SLOT(submitButtonPushed()));
@@ -136,6 +152,24 @@ void TimingPoint::submitButtonPushed() {
     if (temp <= imageSlider->maximum()) {
         changeImage(temp);
         imageSlider->setValue(temp);
+    }
+}
+
+void TimingPoint::plusButtonPushed() {
+    int sliderPosition = imageSlider->sliderPosition();
+    if(sliderPosition < imageSlider->maximum()) {
+        int newPosition = sliderPosition + 1;
+        imageSlider->setSliderPosition(newPosition);
+        changeImage(newPosition);
+    }
+}
+
+void TimingPoint::minusButtonPushed() {
+    int sliderPosition = imageSlider->sliderPosition();
+    if(sliderPosition >imageSlider->minimum()) {
+        int newPosition = sliderPosition - 1;
+        imageSlider->setSliderPosition(newPosition);
+        changeImage(newPosition);
     }
 }
 
