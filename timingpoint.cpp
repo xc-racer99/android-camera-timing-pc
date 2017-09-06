@@ -290,4 +290,10 @@ void TimingPoint::addNewImage(QString fileName) {
 
     // Increment the slider's maximum
     imageSlider->setMaximum(imageSlider->maximum() + 1);
+
+    // Change the image if this is the first one
+    if(imagePaths.length() == 2) {
+        changeImage(1);
+        imageSlider->setSliderPosition(1);
+    }
 }
