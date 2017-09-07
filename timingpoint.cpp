@@ -150,26 +150,21 @@ void TimingPoint::submitButtonPushed() {
     // Switch to the next image
     int temp = imageSlider->value() + 1;
     if (temp <= imageSlider->maximum()) {
-        changeImage(temp);
-        imageSlider->setValue(temp);
+        imageSlider->triggerAction(QAbstractSlider::SliderSingleStepAdd);
     }
 }
 
 void TimingPoint::plusButtonPushed() {
     int sliderPosition = imageSlider->sliderPosition();
     if(sliderPosition < imageSlider->maximum()) {
-        int newPosition = sliderPosition + 1;
-        imageSlider->setSliderPosition(newPosition);
-        changeImage(newPosition);
+        imageSlider->triggerAction(QAbstractSlider::SliderSingleStepAdd);
     }
 }
 
 void TimingPoint::minusButtonPushed() {
     int sliderPosition = imageSlider->sliderPosition();
     if(sliderPosition >imageSlider->minimum()) {
-        int newPosition = sliderPosition - 1;
-        imageSlider->setSliderPosition(newPosition);
-        changeImage(newPosition);
+        imageSlider->triggerAction(QAbstractSlider::SliderSingleStepSub);
     }
 }
 
@@ -331,7 +326,6 @@ void TimingPoint::addNewImage(QString fileName) {
 
     // Change the image if this is the first one
     if(imagePaths.length() == 2) {
-        changeImage(1);
-        imageSlider->setSliderPosition(1);
+        imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
     }
 }
