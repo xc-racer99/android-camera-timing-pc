@@ -16,29 +16,11 @@
 
 #include "mytcpsocket.h"
 #include "timingpoint.h"
-#include "timingpointinfo.h"
 
 TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QGroupBox(parent)
 {
     commonSetupCode(directory);
     setConnectionInfo(ip, name);
-}
-
-TimingPoint::TimingPoint(QString directory, QWidget *parent) : QGroupBox(parent)
-{
-    commonSetupCode(directory);
-
-    // Create a dialog asking for connection info
-    dialog = new QDialog(this);
-    dialog->setFixedSize(210, 110);
-    TimingPointInfo info(dialog);
-
-    // Connect things together
-    connect(&info, SIGNAL(setupCompleted(QString, QString)), this, SLOT(gotConnectionInfo(QString,QString)));
-    connect(dialog, SIGNAL(rejected()), this, SLOT(noConnectionInfo()));
-
-    // Show the dialog
-    dialog->exec();
 }
 
 void TimingPoint::commonSetupCode(QString directory) {
@@ -236,18 +218,6 @@ void TimingPoint::changeImage(int index) {
 
     // Change the focus
     bibNumEdit->setFocus();
-}
-
-void TimingPoint::gotConnectionInfo(QString ip, QString name) {
-    // Close dialog box
-    dialog->accept();
-
-    setConnectionInfo(ip, name);
-}
-
-void TimingPoint::noConnectionInfo() {
-    // The user cancelled the creation, use a default "Finish" and IP 127.0.0.1
-    setConnectionInfo("127.0.0.1", "Finish");
 }
 
 void TimingPoint::setConnectionInfo(QString ip, QString name) {

@@ -5,13 +5,11 @@ QT += network
 SOURCES += \
     main.cpp \
     timingpoint.cpp \
-    timingpointinfo.cpp \
     mytcpsocket.cpp \
     mainwindow.cpp
 
 HEADERS += \
     timingpoint.h \
-    timingpointinfo.h \
     mytcpsocket.h \
     mainwindow.h
 

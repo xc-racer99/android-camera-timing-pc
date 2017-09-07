@@ -13,7 +13,6 @@ class TimingPoint : public QGroupBox
 {
     Q_OBJECT
 public:
-    explicit TimingPoint(QString directory, QWidget *parent = 0);
     explicit TimingPoint(QString directory, QString name, QString ip, QWidget *parent = 0);
 private:
     void commonSetupCode(QString directory);
@@ -37,9 +36,6 @@ private:
     QFile *csvFile;
 signals:
 private slots:
-    void gotConnectionInfo(QString ip, QString name);
-    void noConnectionInfo();
-
     // Status handlers
     void setIpAddress();
     void setConnected();

@@ -1,7 +1,11 @@
 #include <QApplication>
 #include <QDir>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
+#include <QFormLayout>
+#include <QMessageBox>
 #include <QScrollArea>
 #include <QTextStream>
 
@@ -74,8 +78,40 @@ void MainWindow::quit() {
 }
 
 void MainWindow::newTimingPoint() {
-    TimingPoint *tPoint = new TimingPoint(directory);
-    layout->addWidget(tPoint);
+    // Get connection info
+    QDialog dialog(this);
+    QFormLayout formLayout(&dialog);
+
+    // Point name
+    QLineEdit *pointName = new QLineEdit(&dialog);
+    QLabel pointNameLabel(tr("Point Name:"));
+    formLayout.addRow(&pointNameLabel, pointName);
+
+    // IP Address
+    QLineEdit *mainIp = new QLineEdit(&dialog);
+    QLabel mainIpLabel(tr("Main IP:"));
+    formLayout.addRow(&mainIpLabel, mainIp);
+
+    // Buttons
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               Qt::Horizontal, &dialog);
+    formLayout.addRow(&buttonBox);
+
+    // Make connections
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    if (dialog.exec() == QDialog::Accepted) {
+        if(pointName->text().isEmpty() || mainIp->text().isEmpty()) {
+            QMessageBox msgBox;
+            msgBox.setText(tr("You must specify both a point name and an IP"));
+            msgBox.exec();
+            return;
+        }
+
+        TimingPoint *tPoint = new TimingPoint(directory, pointName->text(), mainIp->text());
+        layout->addWidget(tPoint);
+    }
 }
 
 void MainWindow::newTimingPoint(QString name, QString ip) {
