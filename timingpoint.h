@@ -15,31 +15,30 @@ class TimingPoint : public QGroupBox
 public:
     explicit TimingPoint(QString directory, QString name, QString ip, QWidget *parent = 0);
 private:
-    void commonSetupCode(QString directory);
-    void setConnectionInfo(QString ip, QString name);
+    void saveSettings();
+    void startBackgroundThread(QString ip, QString name);
 
-    QLabel *imageHolder;
+    // Common properties
+    QFile *csvFile;
+    QLabel *timestamp;
+    QLineEdit *bibNumEdit;
+    QPushButton *nextButton;
     QSlider *imageSlider;
-    QLabel *serverStatus;
-    QLabel *ipAddressLabel;
-    QString ipAddressString;
-    QDialog *dialog;
-    QString mainFolder;
     QString subDirectory;
+
+    // Main phone variables
+    QLabel *imageHolder;
+    QLabel *ipAddress;
+    QLabel *serverStatus;
     QPushButton *reconnectButton;
     QPushButton *changeIpButton;
-    QPushButton *nextButton;
-    QLabel *timestampLabel;
-    QLabel *actualTimestamp;
     QStringList imagePaths;
-    QLineEdit *bibNumEdit;
-    QFile *csvFile;
+
 signals:
 private slots:
     // Status handlers
-    void setIpAddress();
-    void setConnected();
-    void setDisconnected();
+    void setIpAddress(QString newIp);
+    void setConnectionStatus(QString status);
 
     // Button handlers
     void reconnectToServer();
@@ -49,7 +48,6 @@ private slots:
     void minusButtonPushed();
 
     // Image-related handlers
-    void startBackgroundThread(QString ip, QString name);
     void addNewImage(QString fileName);
     void changeImage(int index);
 public slots:

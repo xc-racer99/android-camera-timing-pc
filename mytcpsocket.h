@@ -17,7 +17,7 @@ public:
 signals:
     void finished();
     void newImage(QString filename);
-    void connected();
+    void serverStatus(QString status);
 public slots:
     void process();
 private:

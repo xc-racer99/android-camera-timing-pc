@@ -9,12 +9,13 @@ MyTcpSocket::MyTcpSocket(QString host, QString dir)
 }
 
 void MyTcpSocket::process() {
+    emit serverStatus("Connecting");
     socket = new QTcpSocket(this);
     socket->connectToHost(hostName, 54321);
 
     if(socket->waitForConnected(50000)) {
         qDebug() << tr("Connected %1").arg(hostName);
-        emit connected();
+        emit serverStatus("Connected");
     } else {
         qDebug() << tr("Failed to connect to %1").arg(hostName);
     }
@@ -47,6 +48,7 @@ void MyTcpSocket::process() {
             }
         }
     }
+    emit serverStatus("Disconnected");
     emit finished();
 }
 

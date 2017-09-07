@@ -19,78 +19,80 @@
 
 TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QGroupBox(parent)
 {
-    commonSetupCode(directory);
-    setConnectionInfo(ip, name);
-}
+    // Make sure we have a folder created for this timing point
+    subDirectory = directory + name + "/";
+    QDir *dir = new QDir(subDirectory);
+    if(!dir->exists())
+        dir->mkpath(subDirectory);
 
-void TimingPoint::commonSetupCode(QString directory) {
-    // Pass the directory along
-    mainFolder = directory;
+    // Create our info labels
+    QLabel *ipAddressLabel = new QLabel(this);
+    ipAddressLabel->setText(tr("IP:"));
+    QLabel *serverStatusLabel = new QLabel(this);
+    serverStatusLabel->setText(tr("Server Status:"));
+    QLabel *timestampLabel = new QLabel(this);
+    timestampLabel->setText(tr("Timestamp:"));
+    QLabel *bibNumLabel = new QLabel(this);
+    bibNumLabel->setText(tr("Bib Number:"));
 
-    // Create our strings
-    ipAddressString = "0.0.0.0";
+    // Initialize variable labels
+    timestamp = new QLabel(this);
+    ipAddress = new QLabel(this);
+    ipAddress->setText(ip);
+    serverStatus = new QLabel(this);
+
+    // Initialize push buttons
+    nextButton = new QPushButton(this);
+    nextButton->setText(tr("Next Person"));
+    reconnectButton = new QPushButton(this);
+    reconnectButton->setText(tr("Reconnect"));
+    changeIpButton = new QPushButton();
+    changeIpButton->setText(tr("Change IP"));
+
+    // Initialize line edits
+    bibNumEdit = new QLineEdit(this);
 
     // Setup a QLabel which holds the image
-    imageHolder = new QLabel;
+    imageHolder = new QLabel(this);
     imageHolder->setBackgroundRole(QPalette::Base);
     imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     imageHolder->setScaledContents(true);
 
     // Slider to switch among images
-    imageSlider = new QSlider();
+    imageSlider = new QSlider(this);
     imageSlider->setMinimum(0);
     imageSlider->setMaximum(0);
     imageSlider->setOrientation(Qt::Horizontal);
     imageSlider->setTracking(false);
 
     // Add buttons on each end of the slider
-    QPushButton *minusButton = new QPushButton();
+    QPushButton *minusButton = new QPushButton(this);
     minusButton->setIcon(QIcon(":/images/images/minus-icon.png"));
     minusButton->setIconSize(QSize(25, 25));
 
-    QPushButton *plusButton = new QPushButton();
+    QPushButton *plusButton = new QPushButton(this);
     plusButton->setIcon(QIcon(":/images/images/plus-icon.png"));
     plusButton->setIconSize(QSize(25, 25));
-
-    // Add buttons
-    nextButton = new QPushButton();
-    nextButton->setText(tr("Next Person"));
-    reconnectButton = new QPushButton();
-    reconnectButton->setText(tr("Reconnect"));
-    reconnectButton->setEnabled(false);
-    changeIpButton = new QPushButton();
-    changeIpButton->setText(tr("Change IP"));
-    changeIpButton->setEnabled(false);
-
-    // Add line edit for bib number
-    bibNumEdit = new QLineEdit();
-    QLabel *bibNumLabel = new QLabel();
-    bibNumLabel->setText(tr("Bib Number:"));
-    bibNumLabel->setBuddy(bibNumEdit);
-
-    // Add info labels
-    timestampLabel = new QLabel(tr("Timstamp:"));
-    actualTimestamp = new QLabel("");
-    ipAddressLabel = new QLabel();
-    serverStatus = new QLabel("Server Status: Disconnected");
 
     // Choose our blank image
     imagePaths.append(":/images/images/No_image.png");
     changeImage(0);
 
     // Our layout
-    QGridLayout *gridLayout = new QGridLayout();
+    QGridLayout *gridLayout = new QGridLayout(this);
     gridLayout->setContentsMargins(5, 5, 5, 5);
 
     gridLayout->addWidget(plusButton, 6, 2, 1, 1);
     gridLayout->addWidget(timestampLabel, 0, 4, 1, 1);
-    gridLayout->addWidget(ipAddressLabel, 4, 4, 1, 2);
+    gridLayout->addWidget(ipAddressLabel, 4, 4, 1, 1);
+    gridLayout->addWidget(ipAddress, 4, 5, 1, 1);
     gridLayout->addWidget(bibNumEdit, 1, 5, 1, 1);
-    gridLayout->addWidget(serverStatus, 5, 4, 1, 2);
+    gridLayout->addWidget(serverStatusLabel, 5, 4, 1, 1);
+    gridLayout->addWidget(serverStatus, 5, 5, 1, 1);
     gridLayout->addWidget(nextButton, 2, 4, 1, 2);
     gridLayout->addWidget(bibNumLabel, 1, 4, 1, 1);
     gridLayout->addWidget(imageSlider, 6, 1, 1, 1);
-    gridLayout->addWidget(actualTimestamp, 0, 5, 1, 1);
+    gridLayout->addWidget(timestamp, 0, 5, 1, 1);
     gridLayout->addWidget(minusButton, 6, 0, 1, 1);
     gridLayout->addWidget(imageHolder, 0, 0, 6, 3);
     gridLayout->addWidget(reconnectButton, 6, 4, 1, 1);
@@ -100,6 +102,9 @@ void TimingPoint::commonSetupCode(QString directory) {
     gridLayout->setColumnStretch(3, 10);
 
     setLayout(gridLayout);
+
+    // Set the title of the timing point
+    setTitle(name);
 
     // Button connections
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
@@ -113,11 +118,36 @@ void TimingPoint::commonSetupCode(QString directory) {
 
     // Slider connection
     connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(changeImage(int)));
+
+    // Save the settings
+    saveSettings();
+
+    // Create a list of images already present
+    QDir subDir(subDirectory);
+    QStringList filter("*.jpg");
+    QFileInfoList initialFileInfo = subDir.entryInfoList(filter, QDir::Files, QDir::Name);
+    for(int i = 0; i < initialFileInfo.length(); i++)
+        imagePaths.append(initialFileInfo.at(i).absoluteFilePath());
+
+    // Set the initial image if we already have images
+    if(imagePaths.length() > 1) {
+        // Set the image slider length to the number of images we have
+        imageSlider->setMaximum(imagePaths.length() - 1);
+        imageSlider->setSliderPosition(imagePaths.length() - 1);
+        changeImage(imagePaths.length() - 1);
+    }
+
+    // Create the csv file that we read from and write to
+    csvFile = new QFile(subDirectory + "output.csv");
+    csvFile->open(QFile::Append | QFile::ReadOnly);
+
+    // Start the image saving thread
+    startBackgroundThread(ip, subDirectory);
 }
 
 void TimingPoint::submitButtonPushed() {
     // Write the time and bib number to the CSV
-    QString time = actualTimestamp->text();
+    QString time = timestamp->text();
     QString bibNumber = bibNumEdit->text();
 
     // Divide up the bib numbers if there's multiple separated by a comma
@@ -150,43 +180,36 @@ void TimingPoint::minusButtonPushed() {
     }
 }
 
-void TimingPoint::setIpAddress() {
-    ipAddressLabel->setText(tr("IP: %1").arg(ipAddressString));
+void TimingPoint::setIpAddress(QString newIp) {
+    ipAddress->setText(newIp);
 }
 
-void TimingPoint::setConnected() {
-    serverStatus->setText("Server Status: Connected");
-    reconnectButton->setEnabled(false);
-    changeIpButton->setEnabled(false);
-}
-
-void TimingPoint::setDisconnected() {
-    serverStatus->setText("Server Status: Disconnected");
-    reconnectButton->setEnabled(true);
-    changeIpButton->setEnabled(true);
+void TimingPoint::setConnectionStatus(QString status) {
+    // Re-enable buttons if the status is disconnected
+    if(status == "Disconnected") {
+        reconnectButton->setEnabled(true);
+        changeIpButton->setEnabled(true);
+    } else {
+        reconnectButton->setEnabled(false);
+        changeIpButton->setEnabled(false);
+    }
+    serverStatus->setText(status);
 }
 
 void TimingPoint::changeIpDialog() {
     bool ok;
-    QString newIp = QInputDialog::getText(this, tr("Enter new IP"), tr("IP:"), QLineEdit::Normal, ipAddressString, &ok);
+    QString newIp = QInputDialog::getText(this, tr("Enter new IP"), tr("IP:"), QLineEdit::Normal, ipAddress->text(), &ok);
 
     // Update the ip address shown
     if(ok && !newIp.isEmpty()) {
-        ipAddressString = newIp;
-        setIpAddress();
+        ipAddress->setText(newIp);
 
-        // Modify the .settings file
-        QFile settingsFile(subDirectory + ".settings");
-        settingsFile.open(QIODevice::WriteOnly);
-        QTextStream out(&settingsFile);
-        out << ipAddressString;
-        settingsFile.flush();
-        settingsFile.close();
+        saveSettings();
     }
 }
 
 void TimingPoint::reconnectToServer() {
-    startBackgroundThread(ipAddressString, subDirectory);
+    startBackgroundThread(ipAddress->text(), subDirectory);
 }
 
 void TimingPoint::changeImage(int index) {
@@ -204,11 +227,11 @@ void TimingPoint::changeImage(int index) {
     qint64 temp = rawTimestamp.toLongLong(&ok);
     if(ok) {
         QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
-        actualTimestamp->setText(time.time().toString("hh:mm:ss.zzz"));
+        timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
         // Enable the next button
         nextButton->setEnabled(true);
     } else {
-        actualTimestamp->setText("");
+        timestamp->setText("");
         // Disable the next button
         nextButton->setEnabled(false);
     }
@@ -220,51 +243,14 @@ void TimingPoint::changeImage(int index) {
     bibNumEdit->setFocus();
 }
 
-void TimingPoint::setConnectionInfo(QString ip, QString name) {
-    // Set internal variable
-    ipAddressString = ip;
-
-    // Set the IP address label
-    setIpAddress();
-
-    // Set the title
-    setTitle(name);
-
-    // Make sure we have a folder created for this timing point
-    subDirectory = mainFolder + name + "/";
-    QDir *dir = new QDir(subDirectory);
-    if(!dir->exists())
-        dir->mkpath(subDirectory);
-
+void TimingPoint::saveSettings() {
     // Save the IP to a file
     QFile settingsFile(subDirectory + ".settings");
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
-    out << ip;
+    out << ipAddress->text();
     settingsFile.flush();
     settingsFile.close();
-
-    // Create a list of images already present
-    QDir subDir(subDirectory);
-    QStringList filter("*.jpg");
-    QFileInfoList initialFileInfo = subDir.entryInfoList(filter, QDir::Files, QDir::Name);
-    for(int i = 0; i < initialFileInfo.length(); i++)
-        imagePaths.append(initialFileInfo.at(i).absoluteFilePath());
-
-    // Set the initial image if we already have images
-    if(imagePaths.length() > 1) {
-        // Set the image slider length to the number of images we have
-        imageSlider->setMaximum(imagePaths.length() - 1);
-        imageSlider->setSliderPosition(imagePaths.length() - 1);
-        changeImage(imagePaths.length() - 1);
-    }
-
-    // Create the csv file that we read from and write to
-    csvFile = new QFile(subDirectory + "output.csv");
-    csvFile->open(QFile::Append | QFile::ReadOnly);
-
-    // Start the image saving thread
-    startBackgroundThread(ip, subDirectory);
 }
 
 void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
@@ -275,9 +261,8 @@ void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
     socket->moveToThread(networkThread);
 
     // Connect signals and slots
-    connect(socket, SIGNAL(connected()), this, SLOT(setConnected()));
+    connect(socket, SIGNAL(serverStatus(QString)), this, SLOT(setConnectionStatus(QString)));
     connect(socket, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
-    connect(socket, SIGNAL(finished()), this, SLOT(setDisconnected()));
     connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
     connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
     connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
