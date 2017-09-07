@@ -227,7 +227,7 @@ void TimingPoint::changeImage(int index) {
     qint64 temp = rawTimestamp.toLongLong(&ok);
     if(ok) {
         QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
-        actualTimestamp->setText(time.time().toString());
+        actualTimestamp->setText(time.time().toString("hh:mm:ss.zzz"));
         // Enable the next button
         nextButton->setEnabled(true);
     } else {
