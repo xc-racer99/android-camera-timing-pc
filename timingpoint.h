@@ -27,6 +27,7 @@ private:
     QString subDirectory;
 
     // Main phone variables
+    QGroupBox *statusBox;
     QLabel *imageHolder;
     QLabel *ipAddress;
     QLabel *serverStatus;

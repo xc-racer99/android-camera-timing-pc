@@ -78,25 +78,32 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     imagePaths.append(":/images/images/No_image.png");
     changeImage(0);
 
+    // Create a group box containing the camera status
+    statusBox = new QGroupBox(this);
+    statusBox->setTitle(tr("Status"));
+    QGridLayout *statusLayout = new QGridLayout(statusBox);
+    statusLayout->addWidget(ipAddressLabel, 0, 0, 1, 1);
+    statusLayout->addWidget(ipAddress, 0, 1, 1, 1);
+    statusLayout->addWidget(serverStatusLabel, 1, 0, 1, 1);
+    statusLayout->addWidget(serverStatus, 1, 1, 1, 1);
+    statusLayout->addWidget(reconnectButton, 2, 0, 1, 1);
+    statusLayout->addWidget(changeIpButton, 2, 1, 1, 1);
+    statusBox->setLayout(statusLayout);
+
     // Our layout
     QGridLayout *gridLayout = new QGridLayout(this);
     gridLayout->setContentsMargins(5, 5, 5, 5);
 
     gridLayout->addWidget(plusButton, 6, 2, 1, 1);
     gridLayout->addWidget(timestampLabel, 0, 4, 1, 1);
-    gridLayout->addWidget(ipAddressLabel, 4, 4, 1, 1);
-    gridLayout->addWidget(ipAddress, 4, 5, 1, 1);
     gridLayout->addWidget(bibNumEdit, 1, 5, 1, 1);
-    gridLayout->addWidget(serverStatusLabel, 5, 4, 1, 1);
-    gridLayout->addWidget(serverStatus, 5, 5, 1, 1);
     gridLayout->addWidget(nextButton, 2, 4, 1, 2);
     gridLayout->addWidget(bibNumLabel, 1, 4, 1, 1);
     gridLayout->addWidget(imageSlider, 6, 1, 1, 1);
     gridLayout->addWidget(timestamp, 0, 5, 1, 1);
     gridLayout->addWidget(minusButton, 6, 0, 1, 1);
     gridLayout->addWidget(imageHolder, 0, 0, 6, 3);
-    gridLayout->addWidget(reconnectButton, 6, 4, 1, 1);
-    gridLayout->addWidget(changeIpButton, 6, 5, 1, 1);
+    gridLayout->addWidget(statusBox, 4, 4, 3, 2);
 
     gridLayout->setRowStretch(3, 10);
     gridLayout->setColumnStretch(3, 10);
