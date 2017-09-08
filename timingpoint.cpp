@@ -66,19 +66,26 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     QGridLayout *gridLayout = new QGridLayout(this);
     gridLayout->setContentsMargins(5, 5, 5, 5);
 
-    gridLayout->addWidget(plusButton, 6, 2, 1, 1);
-    gridLayout->addWidget(timestampLabel, 0, 4, 1, 1);
-    gridLayout->addWidget(bibNumEdit, 1, 5, 1, 1);
-    gridLayout->addWidget(nextButton, 2, 4, 1, 2);
-    gridLayout->addWidget(bibNumLabel, 1, 4, 1, 1);
-    gridLayout->addWidget(imageSlider, 6, 1, 1, 1);
-    gridLayout->addWidget(timestamp, 0, 5, 1, 1);
+    gridLayout->addWidget(plusButton, 6, 3, 1, 1);
+    gridLayout->addWidget(timestampLabel, 0, 5, 1, 1);
+    gridLayout->addWidget(bibNumEdit, 1, 6, 1, 1);
+    gridLayout->addWidget(nextButton, 2, 5, 1, 2);
+    gridLayout->addWidget(bibNumLabel, 1, 5, 1, 1);
+    gridLayout->addWidget(imageSlider, 6, 1, 1, 2);
+    gridLayout->addWidget(timestamp, 0, 6, 1, 1);
     gridLayout->addWidget(minusButton, 6, 0, 1, 1);
-    gridLayout->addWidget(mainCamera->imageHolder, 0, 0, 6, 3);
-    gridLayout->addWidget(mainCamera->statusBox, 4, 4, 3, 2);
+    gridLayout->addWidget(mainCamera->imageHolder, 0, 0, 6, 2);
+    gridLayout->addWidget(mainCamera->statusBox, 4, 5, 1, 2);
+
+    gridLayout->addWidget(secondCamera->imageHolder, 0, 2, 6, 2);
+    gridLayout->addWidget(secondCamera->statusBox, 5, 5, 2, 2);
+
+    // Set stretch for the parts of the image
+    gridLayout->setColumnStretch(1, 5);
+    gridLayout->setColumnStretch(2, 5);
 
     gridLayout->setRowStretch(3, 10);
-    gridLayout->setColumnStretch(3, 10);
+    gridLayout->setColumnStretch(4, 10);
 
     setLayout(gridLayout);
 
