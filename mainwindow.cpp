@@ -67,7 +67,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             continue;
         if(settingsFile.open(QFile::ReadOnly)) {
             QTextStream in(&settingsFile);
-            newTimingPoint(subDirs.at(i).baseName(), in.readLine());
+            QString ip = in.readLine();
+            QString secondIp = in.readLine();
+            TimingPoint *tPoint;
+            if(secondIp != NULL)
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, this);
+            else
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", this);
+            layout->addWidget(tPoint);
         }
         settingsFile.close();
     }
@@ -92,6 +99,11 @@ void MainWindow::newTimingPoint() {
     QLabel mainIpLabel(tr("Main IP:"));
     formLayout.addRow(&mainIpLabel, mainIp);
 
+    // Secondary IP
+    QLineEdit *secondIp = new QLineEdit(&dialog);
+    QLabel secondIpLabel(tr("Second IP:"));
+    formLayout.addRow(&secondIpLabel, secondIp);
+
     // Buttons
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                                Qt::Horizontal, &dialog);
@@ -109,12 +121,7 @@ void MainWindow::newTimingPoint() {
             return;
         }
 
-        TimingPoint *tPoint = new TimingPoint(directory, pointName->text(), mainIp->text());
+        TimingPoint *tPoint = new TimingPoint(directory, pointName->text(), mainIp->text(), secondIp->text(), this);
         layout->addWidget(tPoint);
     }
-}
-
-void MainWindow::newTimingPoint(QString name, QString ip) {
-    TimingPoint *tPoint = new TimingPoint(directory, name, ip);
-    layout->addWidget(tPoint);
 }

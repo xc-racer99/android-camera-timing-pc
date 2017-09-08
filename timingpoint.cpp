@@ -18,7 +18,7 @@
 #include "timingcamera.h"
 #include "timingpoint.h"
 
-TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QGroupBox(parent)
+TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString secondIp, QWidget *parent) : QGroupBox(parent)
 {
     // Make sure we have a folder created for this timing point
     subDirectory = directory + name + "/";
@@ -28,6 +28,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
 
     // Create our camera devices
     mainCamera = new TimingCamera(subDirectory + "Main/", ip, this);
+    secondCamera = new TimingCamera(subDirectory + "Secondary/", secondIp, this);
 
     // Create our info labels
     QLabel *timestampLabel = new QLabel(this);
@@ -97,11 +98,15 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
 
     // Connections to Camera
     connect(this, SIGNAL(changeImage(int)), mainCamera, SLOT(changeImage(int)));
-    connect(mainCamera, SIGNAL(ipAddressChanged(QString)), this, SLOT(saveSettings(QString)));
     connect(mainCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
+    connect(mainCamera, SIGNAL(ipAddressChanged(QString)), this, SLOT(saveSettings()));
+
+    connect(this, SIGNAL(changeImage(int)), secondCamera, SLOT(changeImage(int)));
+    connect(secondCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
+    connect(secondCamera, SIGNAL(ipAddressChanged(QString)), this, SLOT(saveSettings()));
 
     // Save the settings
-    saveSettings(ip);
+    saveSettings();
 
     // Trigger change to image
     imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
@@ -154,6 +159,12 @@ void TimingPoint::minusButtonPushed() {
 }
 
 void TimingPoint::updateImageInfo(int index) {
+    // Add a slight delay in case one of the network connections is lagging slightly
+//    msleep(250);
+
+    // Emit the signal to the cameras to change their image
+    emit changeImage(index);
+
     // Update the timestamp
     QFileInfo pic = mainCamera->imagePaths.at(index);
     QString rawTimestamp = pic.baseName();
@@ -167,9 +178,20 @@ void TimingPoint::updateImageInfo(int index) {
         // Enable the next button
         nextButton->setEnabled(true);
     } else {
-        timestamp->setText("");
-        // Disable the next button
-        nextButton->setEnabled(false);
+        // Presumably there was no image at the main camera, so try getting the timestamp from the second image
+        pic = secondCamera->imagePaths.at(index);
+        rawTimestamp = pic.baseName();
+        temp = rawTimestamp.toLongLong(&ok);
+        if(ok) {
+            QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
+            timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
+            // Enable the next button
+            nextButton->setEnabled(true);
+        } else {
+            timestamp->setText("");
+            // Disable the next button
+            nextButton->setEnabled(false);
+        }
     }
 
     // If we've already written a bib number, show it in the Line Edit
@@ -177,20 +199,20 @@ void TimingPoint::updateImageInfo(int index) {
 
     // Change the focus
     bibNumEdit->setFocus();
-
-    emit changeImage(index);
 }
 
-void TimingPoint::saveSettings(QString ipAddress) {
-    // Save the IP to a file
+void TimingPoint::saveSettings() {
+    // Save the IPs to a file
     QFile settingsFile(subDirectory + ".settings");
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
-    out << ipAddress;
+    out << mainCamera->ipAddress->text() + "\n" + secondCamera->ipAddress->text();
     settingsFile.flush();
     settingsFile.close();
 }
 
 void TimingPoint::incrementSliderMax() {
-    imageSlider->setMaximum(imageSlider->maximum() + 1);
+    int mainImages = mainCamera->imagePaths.length();
+    int secondImages = mainCamera->imagePaths.length();
+    imageSlider->setMaximum(qMax(mainImages, secondImages) - 1);
 }

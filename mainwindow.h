@@ -26,7 +26,6 @@ signals:
 public slots:
 private slots:
     void newTimingPoint();
-    void newTimingPoint(QString name, QString ip);
     void quit();
 };
 
