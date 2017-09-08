@@ -110,8 +110,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     if(mainCamera->imagePaths.length() > 1) {
         // Set the image slider length to the number of images we have
         imageSlider->setMaximum(mainCamera->imagePaths.length() - 1);
-        imageSlider->setSliderPosition(mainCamera->imagePaths.length() - 1);
-        changeImage(mainCamera->imagePaths.length() - 1);
+        imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
     }
 
     // Create the csv file that we read from and write to
