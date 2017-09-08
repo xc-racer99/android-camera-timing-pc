@@ -46,7 +46,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     // Create a group box containing the camera status
     statusBox = new QGroupBox();
-    statusBox->setTitle(tr("Status"));
+    statusBox->setTitle(temp.dirName() + tr(" Status"));
     QGridLayout *statusLayout = new QGridLayout(statusBox);
     statusLayout->addWidget(ipAddressLabel, 0, 0, 1, 1);
     statusLayout->addWidget(ipAddress, 0, 1, 1, 1);
