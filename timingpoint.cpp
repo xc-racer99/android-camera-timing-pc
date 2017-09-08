@@ -76,7 +76,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
 
     // Choose our blank image
     imagePaths.append(":/images/images/No_image.png");
-    changeImage(0);
+    imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
 
     // Create a group box containing the camera status
     statusBox = new QGroupBox(this);
