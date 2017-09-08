@@ -16,8 +16,8 @@ public:
     QGroupBox *statusBox;
     QLabel *imageHolder;
     QStringList imagePaths;
-private:
     QLabel *ipAddress;
+private:
     QLabel *serverStatus;
     QPushButton *reconnectButton;
     QPushButton *changeIpButton;
