@@ -118,6 +118,9 @@ void TimingCamera::startBackgroundThread() {
 }
 
 void TimingCamera::changeImage(int index) {
+    // Account for the possibilty that we missed image(s)
+    while(index >= imagePaths.length())
+        imagePaths.append(":/images/images/No_image.png");
     QImage image(imagePaths.at(index));
     QImage scaledImage = image.scaledToWidth(512);
     imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
