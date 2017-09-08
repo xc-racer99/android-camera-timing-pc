@@ -18,21 +18,26 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     ipAddress = new QLabel();
     ipAddress->setText(ip);
 
+    // Create a group box containing the camera status
+    statusBox = new QGroupBox();
+    statusBox->setTitle(temp.dirName() + tr(" Status"));
+    QGridLayout *statusLayout = new QGridLayout(statusBox);
+
     // Create our info labels
-    QLabel *ipAddressLabel = new QLabel();
+    QLabel *ipAddressLabel = new QLabel(statusBox);
     ipAddressLabel->setText(tr("IP:"));
-    QLabel *serverStatusLabel = new QLabel();
+    QLabel *serverStatusLabel = new QLabel(statusBox);
     serverStatusLabel->setText(tr("Server Status:"));
 
     // Initialize the variable labels
-    ipAddress = new QLabel();
+    ipAddress = new QLabel(statusBox);
     ipAddress->setText(ip);
-    serverStatus = new QLabel();
+    serverStatus = new QLabel(statusBox);
 
     // Initialize push buttons
-    reconnectButton = new QPushButton();
+    reconnectButton = new QPushButton(statusBox);
     reconnectButton->setText(tr("Reconnect"));
-    changeIpButton = new QPushButton();
+    changeIpButton = new QPushButton(statusBox);
     changeIpButton->setText(tr("Change IP"));
 
     // Setup a QLabel which holds the image
@@ -44,10 +49,6 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     // Choose our blank image
     imagePaths.append(":/images/images/No_image.png");
 
-    // Create a group box containing the camera status
-    statusBox = new QGroupBox();
-    statusBox->setTitle(temp.dirName() + tr(" Status"));
-    QGridLayout *statusLayout = new QGridLayout(statusBox);
     statusLayout->addWidget(ipAddressLabel, 0, 0, 1, 1);
     statusLayout->addWidget(ipAddress, 0, 1, 1, 1);
     statusLayout->addWidget(serverStatusLabel, 1, 0, 1, 1);
@@ -100,7 +101,7 @@ void TimingCamera::setConnectionStatus(QString status) {
 
 void TimingCamera::startBackgroundThread() {
     // Start the separate thread and move the socket to it
-    QThread *networkThread = new QThread();
+    QThread *networkThread = new QThread(this);
     MyTcpSocket *socket = new MyTcpSocket(ipAddress->text(), directory);
 
     socket->moveToThread(networkThread);
