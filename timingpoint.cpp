@@ -1,5 +1,6 @@
 #include <QDateTime>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileDialog>
 #include <QGridLayout>
@@ -13,6 +14,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QThread>
+#include <QTimer>
 #include <QTextStream>
 
 #include "timingcamera.h"
@@ -167,7 +169,11 @@ void TimingPoint::minusButtonPushed() {
 
 void TimingPoint::updateImageInfo(int index) {
     // Add a slight delay in case one of the network connections is lagging slightly
-//    msleep(250);
+    if(mainCamera->imagePaths.length() != secondCamera->imagePaths.length()) {
+        QEventLoop loop;
+        QTimer::singleShot(250, &loop, SLOT(quit()));
+        loop.exec();
+    }
 
     // Emit the signal to the cameras to change their image
     emit changeImage(index);
