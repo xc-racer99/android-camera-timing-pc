@@ -13,8 +13,9 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QThread>
+#include <QTextStream>
 
-#include "mytcpsocket.h"
+#include "timingcamera.h"
 #include "timingpoint.h"
 
 TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *parent) : QGroupBox(parent)
@@ -25,11 +26,10 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     if(!dir->exists())
         dir->mkpath(subDirectory);
 
+    // Create our camera devices
+    mainCamera = new TimingCamera(subDirectory + "Main/", ip, this);
+
     // Create our info labels
-    QLabel *ipAddressLabel = new QLabel(this);
-    ipAddressLabel->setText(tr("IP:"));
-    QLabel *serverStatusLabel = new QLabel(this);
-    serverStatusLabel->setText(tr("Server Status:"));
     QLabel *timestampLabel = new QLabel(this);
     timestampLabel->setText(tr("Timestamp:"));
     QLabel *bibNumLabel = new QLabel(this);
@@ -37,26 +37,13 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
 
     // Initialize variable labels
     timestamp = new QLabel(this);
-    ipAddress = new QLabel(this);
-    ipAddress->setText(ip);
-    serverStatus = new QLabel(this);
 
     // Initialize push buttons
     nextButton = new QPushButton(this);
     nextButton->setText(tr("Next Person"));
-    reconnectButton = new QPushButton(this);
-    reconnectButton->setText(tr("Reconnect"));
-    changeIpButton = new QPushButton();
-    changeIpButton->setText(tr("Change IP"));
 
     // Initialize line edits
     bibNumEdit = new QLineEdit(this);
-
-    // Setup a QLabel which holds the image
-    imageHolder = new QLabel(this);
-    imageHolder->setBackgroundRole(QPalette::Base);
-    imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    imageHolder->setScaledContents(true);
 
     // Slider to switch among images
     imageSlider = new QSlider(this);
@@ -74,22 +61,6 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     plusButton->setIcon(QIcon(":/images/images/plus-icon.png"));
     plusButton->setIconSize(QSize(25, 25));
 
-    // Choose our blank image
-    imagePaths.append(":/images/images/No_image.png");
-    imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
-
-    // Create a group box containing the camera status
-    statusBox = new QGroupBox(this);
-    statusBox->setTitle(tr("Status"));
-    QGridLayout *statusLayout = new QGridLayout(statusBox);
-    statusLayout->addWidget(ipAddressLabel, 0, 0, 1, 1);
-    statusLayout->addWidget(ipAddress, 0, 1, 1, 1);
-    statusLayout->addWidget(serverStatusLabel, 1, 0, 1, 1);
-    statusLayout->addWidget(serverStatus, 1, 1, 1, 1);
-    statusLayout->addWidget(reconnectButton, 2, 0, 1, 1);
-    statusLayout->addWidget(changeIpButton, 2, 1, 1, 1);
-    statusBox->setLayout(statusLayout);
-
     // Our layout
     QGridLayout *gridLayout = new QGridLayout(this);
     gridLayout->setContentsMargins(5, 5, 5, 5);
@@ -102,8 +73,8 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     gridLayout->addWidget(imageSlider, 6, 1, 1, 1);
     gridLayout->addWidget(timestamp, 0, 5, 1, 1);
     gridLayout->addWidget(minusButton, 6, 0, 1, 1);
-    gridLayout->addWidget(imageHolder, 0, 0, 6, 3);
-    gridLayout->addWidget(statusBox, 4, 4, 3, 2);
+    gridLayout->addWidget(mainCamera->imageHolder, 0, 0, 6, 3);
+    gridLayout->addWidget(mainCamera->statusBox, 4, 4, 3, 2);
 
     gridLayout->setRowStretch(3, 10);
     gridLayout->setColumnStretch(3, 10);
@@ -114,8 +85,6 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     setTitle(name);
 
     // Button connections
-    connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
-    connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
     connect(nextButton, SIGNAL(clicked(bool)), this, SLOT(submitButtonPushed()));
     connect(plusButton, SIGNAL(clicked(bool)), this, SLOT(plusButtonPushed()));
     connect(minusButton, SIGNAL(clicked(bool)), this, SLOT(minusButtonPushed()));
@@ -124,32 +93,30 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QWidget *p
     connect(bibNumEdit, SIGNAL(returnPressed()), this, SLOT(submitButtonPushed()));
 
     // Slider connection
-    connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(changeImage(int)));
+    connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(updateImageInfo(int)));
+
+    // Connections to Camera
+    connect(this, SIGNAL(changeImage(int)), mainCamera, SLOT(changeImage(int)));
+    connect(mainCamera, SIGNAL(ipAddressChanged(QString)), this, SLOT(saveSettings(QString)));
+    connect(mainCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
 
     // Save the settings
-    saveSettings();
+    saveSettings(ip);
 
-    // Create a list of images already present
-    QDir subDir(subDirectory);
-    QStringList filter("*.jpg");
-    QFileInfoList initialFileInfo = subDir.entryInfoList(filter, QDir::Files, QDir::Name);
-    for(int i = 0; i < initialFileInfo.length(); i++)
-        imagePaths.append(initialFileInfo.at(i).absoluteFilePath());
+    // Trigger change to image
+    imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
 
     // Set the initial image if we already have images
-    if(imagePaths.length() > 1) {
+    if(mainCamera->imagePaths.length() > 1) {
         // Set the image slider length to the number of images we have
-        imageSlider->setMaximum(imagePaths.length() - 1);
-        imageSlider->setSliderPosition(imagePaths.length() - 1);
-        changeImage(imagePaths.length() - 1);
+        imageSlider->setMaximum(mainCamera->imagePaths.length() - 1);
+        imageSlider->setSliderPosition(mainCamera->imagePaths.length() - 1);
+        changeImage(mainCamera->imagePaths.length() - 1);
     }
 
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
     csvFile->open(QFile::Append | QFile::ReadOnly);
-
-    // Start the image saving thread
-    startBackgroundThread(ip, subDirectory);
 }
 
 void TimingPoint::submitButtonPushed() {
@@ -187,46 +154,9 @@ void TimingPoint::minusButtonPushed() {
     }
 }
 
-void TimingPoint::setIpAddress(QString newIp) {
-    ipAddress->setText(newIp);
-}
-
-void TimingPoint::setConnectionStatus(QString status) {
-    // Re-enable buttons if the status is disconnected
-    if(status == "Disconnected") {
-        reconnectButton->setEnabled(true);
-        changeIpButton->setEnabled(true);
-    } else {
-        reconnectButton->setEnabled(false);
-        changeIpButton->setEnabled(false);
-    }
-    serverStatus->setText(status);
-}
-
-void TimingPoint::changeIpDialog() {
-    bool ok;
-    QString newIp = QInputDialog::getText(this, tr("Enter new IP"), tr("IP:"), QLineEdit::Normal, ipAddress->text(), &ok);
-
-    // Update the ip address shown
-    if(ok && !newIp.isEmpty()) {
-        ipAddress->setText(newIp);
-
-        saveSettings();
-    }
-}
-
-void TimingPoint::reconnectToServer() {
-    startBackgroundThread(ipAddress->text(), subDirectory);
-}
-
-void TimingPoint::changeImage(int index) {
-    QImage image(imagePaths.at(index));
-    QImage scaledImage = image.scaledToHeight(512);
-    imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
-    imageHolder->setMaximumSize(scaledImage.width(), scaledImage.height());
-
+void TimingPoint::updateImageInfo(int index) {
     // Update the timestamp
-    QFileInfo pic = imagePaths.at(index);
+    QFileInfo pic = mainCamera->imagePaths.at(index);
     QString rawTimestamp = pic.baseName();
 
     //Convert the raw timestamp to user-readable string
@@ -248,46 +178,20 @@ void TimingPoint::changeImage(int index) {
 
     // Change the focus
     bibNumEdit->setFocus();
+
+    emit changeImage(index);
 }
 
-void TimingPoint::saveSettings() {
+void TimingPoint::saveSettings(QString ipAddress) {
     // Save the IP to a file
     QFile settingsFile(subDirectory + ".settings");
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
-    out << ipAddress->text();
+    out << ipAddress;
     settingsFile.flush();
     settingsFile.close();
 }
 
-void TimingPoint::startBackgroundThread(QString ip, QString subDir) {
-    // Start the separate thread and move the socket to it
-    QThread *networkThread = new QThread();
-    MyTcpSocket *socket = new MyTcpSocket(ip, subDir);
-
-    socket->moveToThread(networkThread);
-
-    // Connect signals and slots
-    connect(socket, SIGNAL(serverStatus(QString)), this, SLOT(setConnectionStatus(QString)));
-    connect(socket, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
-    connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
-    connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
-    connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
-    connect(networkThread, SIGNAL(finished()), networkThread, SLOT(deleteLater()));
-
-    // Start the thread
-    networkThread->start();
-}
-
-void TimingPoint::addNewImage(QString fileName) {
-    // Add the new image to the list of paths
-    imagePaths.append(fileName);
-
-    // Increment the slider's maximum
+void TimingPoint::incrementSliderMax() {
     imageSlider->setMaximum(imageSlider->maximum() + 1);
-
-    // Change the image if this is the first one
-    if(imagePaths.length() == 2) {
-        imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
-    }
 }

@@ -6,12 +6,14 @@ SOURCES += \
     main.cpp \
     timingpoint.cpp \
     mytcpsocket.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    timingcamera.cpp
 
 HEADERS += \
     timingpoint.h \
     mytcpsocket.h \
-    mainwindow.h
+    mainwindow.h \
+    timingcamera.h
 
 RESOURCES += \
     images.qrc
