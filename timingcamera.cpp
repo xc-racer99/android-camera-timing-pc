@@ -101,7 +101,7 @@ void TimingCamera::setConnectionStatus(QString status) {
 
 void TimingCamera::startBackgroundThread() {
     // Start the separate thread and move the socket to it
-    QThread *networkThread = new QThread(this);
+    QThread *networkThread = new QThread();
     MyTcpSocket *socket = new MyTcpSocket(ipAddress->text(), directory);
 
     socket->moveToThread(networkThread);
