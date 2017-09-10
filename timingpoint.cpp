@@ -134,7 +134,6 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
 
 void TimingPoint::submitButtonPushed() {
     // Write the time and bib number to the CSV
-    QString time = timestamp->text();
     QString bibNumber = bibNumEdit->text();
 
     // Divide up the bib numbers if there's multiple separated by a comma
@@ -142,7 +141,15 @@ void TimingPoint::submitButtonPushed() {
 
     QTextStream out(csvFile);
     for(int i = 0; i < bibNums.length(); i++) {
-        out << time + "," + bibNums.at(i) + "\n";
+        QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
+        // Convert time to hundreths, for nth bib add .1s for each
+        int dsecs = qRound((double)time.msec()/10.0) + 10*i;
+        while(dsecs >= 100) {
+            dsecs -= 100;
+            time = time.addMSecs(1000);
+        }
+        QString actualTime((time.toString("hh:mm:ss") + ".%1").arg(dsecs));
+        out << actualTime + "," + bibNums.at(i) + "\n";
         csvFile->flush();
     }
 
