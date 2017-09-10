@@ -187,7 +187,8 @@ void TimingPoint::updateImageInfo(int index) {
     qint64 temp = rawTimestamp.toLongLong(&ok);
     if(ok) {
         QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
-        timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
+        QString mainTime = time.time().toString("hh:mm:ss");
+        timestamp->setText(QString(mainTime + ".%1").arg(qRound((double)time.time().msec()/10.0)));
         // Enable the next button
         nextButton->setEnabled(true);
     } else {
@@ -197,7 +198,8 @@ void TimingPoint::updateImageInfo(int index) {
         temp = rawTimestamp.toLongLong(&ok);
         if(ok) {
             QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
-            timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
+            QString mainTime = time.time().toString("hh:mm:ss");
+            timestamp->setText(QString(mainTime + ".%1").arg(qRound((double)time.time().msec()/10.0)));
             // Enable the next button
             nextButton->setEnabled(true);
         } else {
