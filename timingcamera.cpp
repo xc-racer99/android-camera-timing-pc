@@ -1,5 +1,6 @@
 #include <QDir>
 #include <QGridLayout>
+#include <QImageReader>
 #include <QInputDialog>
 #include <QScrollArea>
 #include <QSlider>
@@ -151,7 +152,10 @@ void TimingCamera::changeImage(int index) {
     // Account for the possibilty that we missed image(s)
     while(index >= imagePaths.length())
         imagePaths.append(":/images/images/No_image.png");
-    QImage image(imagePaths.at(index));
+    QImageReader reader(imagePaths.at(index));
+    reader.setAutoTransform(true);
+
+    QImage image = reader.read();
 
     // Scale the image up if the width is smaller than 500px
     if(image.width() < 500)
