@@ -15,7 +15,7 @@ class TimingPoint : public QGroupBox
 {
     Q_OBJECT
 public:
-    explicit TimingPoint(QString directory, QString name, QString ip, QString secondIp, QWidget *parent = 0);
+    explicit TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, QWidget *parent = 0);
 private:
     void startBackgroundThread(QString ip, QString name);
 
@@ -28,6 +28,8 @@ private:
     QPushButton *nextButton;
     QSlider *imageSlider;
     QString subDirectory;
+    QStringList bibsUsed;
+    int maxViews;
 
 signals:
     void changeImage(int index);

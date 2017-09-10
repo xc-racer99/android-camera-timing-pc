@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QErrorMessage>
 #include <QFile>
 #include <QFileDialog>
 #include <QFormLayout>
@@ -69,11 +70,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             QTextStream in(&settingsFile);
             QString ip = in.readLine();
             QString secondIp = in.readLine();
+            QString maxViewsString = in.readLine();
+            bool ok;
+            int maxViews = maxViewsString.toInt(&ok);
             TimingPoint *tPoint;
-            if(secondIp != NULL)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, this);
+            if(secondIp == NULL)
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", 1, this);
+            else if(maxViewsString == NULL || !ok)
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, 1, this);
             else
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", this);
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, this);
             layout->addWidget(tPoint);
         }
         settingsFile.close();
@@ -104,6 +110,11 @@ void MainWindow::newTimingPoint() {
     QLabel secondIpLabel(tr("Second IP:"));
     formLayout.addRow(&secondIpLabel, secondIp);
 
+    // # of times we can see the same bib
+    QLineEdit *numViews = new QLineEdit(&dialog);
+    QLabel numViewsLabel(tr("Max times through this point:"));
+    formLayout.addRow(&numViewsLabel, numViews);
+
     // Buttons
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                                Qt::Horizontal, &dialog);
@@ -114,14 +125,16 @@ void MainWindow::newTimingPoint() {
     connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
     if (dialog.exec() == QDialog::Accepted) {
-        if(pointName->text().isEmpty() || mainIp->text().isEmpty()) {
+        if(pointName->text().isEmpty() || mainIp->text().isEmpty() || numViews->text().isEmpty()) {
             QMessageBox msgBox;
-            msgBox.setText(tr("You must specify both a point name and an IP"));
+            msgBox.setText(tr("You must specify a point name, an IP, and the max views"));
             msgBox.exec();
             return;
         }
 
-        TimingPoint *tPoint = new TimingPoint(directory, pointName->text(), mainIp->text(), secondIp->text(), this);
+        TimingPoint *tPoint = new TimingPoint(directory,pointName->text(),
+                                              mainIp->text(), secondIp->text(),
+                                              numViews->text().toInt(), this);
         layout->addWidget(tPoint);
     }
 }

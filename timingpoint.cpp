@@ -10,6 +10,7 @@
 #include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QPixmap>
 #include <QPushButton>
 #include <QSlider>
@@ -20,8 +21,11 @@
 #include "timingcamera.h"
 #include "timingpoint.h"
 
-TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString secondIp, QWidget *parent) : QGroupBox(parent)
+TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, QWidget *parent) : QGroupBox(parent)
 {
+    // Set the maximum number of times we can see someone before warning
+    maxViews = maxNum;
+
     // Make sure we have a folder created for this timing point
     subDirectory = directory + name + "/";
     QDir *dir = new QDir(subDirectory);
@@ -133,6 +137,8 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
 }
 
 void TimingPoint::submitButtonPushed() {
+    bool write = true;
+
     // Write the time and bib number to the CSV
     QString bibNumber = bibNumEdit->text();
 
@@ -141,16 +147,44 @@ void TimingPoint::submitButtonPushed() {
 
     QTextStream out(csvFile);
     for(int i = 0; i < bibNums.length(); i++) {
-        QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
-        // Convert time to hundreths, for nth bib add .1s for each
-        int dsecs = qRound((double)time.msec()/10.0) + 10*i;
-        while(dsecs >= 100) {
-            dsecs -= 100;
-            time = time.addMSecs(1000);
+        QString bibnum = bibNums.at(i);
+        // Check if we've already written this bib number the maximum number of times
+        int views = 0;
+        for(int j = 0; j < bibsUsed.length(); j++) {
+            if(bibsUsed.at(j) == bibnum)
+                views += 1;
+            if(views == maxViews) {
+                // We've seen this bib the max number of times, make sure we want to continue
+                QMessageBox *msgBox = new QMessageBox(this);
+                msgBox->setText("This bib has already been entered the maximum number of times.  Continue?");
+                msgBox->setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+                int ret = msgBox->exec();
+                if(ret == QMessageBox::No) {
+                    write = false;
+                    delete msgBox;
+                    return;
+                } else {
+                    delete msgBox;
+                    break;
+                }
+            }
         }
-        QString actualTime((time.toString("hh:mm:ss") + ".%1").arg(dsecs));
-        out << actualTime + "," + bibNums.at(i) + "\n";
-        csvFile->flush();
+
+        if(write) {
+            // Add this bid to the used bibs
+            bibsUsed.append(bibnum);
+
+            QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
+            // Convert time to hundreths, for nth bib add .1s for each
+            int dsecs = qRound((double)time.msec()/10.0) + 10*i;
+            while(dsecs >= 100) {
+                dsecs -= 100;
+                time = time.addMSecs(1000);
+            }
+            QString actualTime((time.toString("hh:mm:ss") + ".%1").arg(dsecs));
+            out << actualTime + "," + bibnum + "\n";
+            csvFile->flush();
+        }
     }
 
     // Switch to the next image
@@ -227,6 +261,7 @@ void TimingPoint::saveSettings() {
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
     out << mainCamera->ipAddress->text() + "\n" + secondCamera->ipAddress->text();
+    out << "\n" + maxViews;
     settingsFile.flush();
     settingsFile.close();
 }
