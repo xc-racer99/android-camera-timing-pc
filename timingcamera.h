@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QObject>
 #include <QPushButton>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QWidget>
 
 class TimingCamera : public QObject
@@ -14,15 +16,23 @@ public:
     explicit TimingCamera(QString dir, QString ip, QObject *parent = 0);
 
     QGroupBox *statusBox;
-    QLabel *imageHolder;
+    QWidget *imageHolder;
     QStringList imagePaths;
     QLabel *ipAddress;
 private:
+    QLabel *actualImage;
     QLabel *serverStatus;
     QPushButton *reconnectButton;
     QPushButton *changeIpButton;
+    QPushButton *minusButton;
+    QPushButton *plusButton;
+    QScrollArea *scrollArea;
     QString directory;
 
+    float scaleFactor;
+
+    void adjustScrollBar(QScrollBar *scrollBar, double factor);
+    void scaleImage(double factor);
     void startBackgroundThread();
 signals:
     void ipAddressChanged(QString newIp);
@@ -34,6 +44,8 @@ private slots:
     void changeIpDialog();
     void reconnectToServer();
     void setConnectionStatus(QString status);
+    void zoomIn();
+    void zoomOut();
 };
 
 #endif // TIMINGCAMERA_H

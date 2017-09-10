@@ -1,6 +1,7 @@
 #include <QDir>
 #include <QGridLayout>
 #include <QInputDialog>
+#include <QScrollArea>
 #include <QSlider>
 #include <QThread>
 
@@ -10,6 +11,8 @@
 TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(parent)
 {
     directory = dir;
+
+    scaleFactor = 1.0;
 
     QDir temp(directory);
     if(!temp.exists())
@@ -40,11 +43,35 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     changeIpButton = new QPushButton(statusBox);
     changeIpButton->setText(tr("Change IP"));
 
-    // Setup a QLabel which holds the image
-    imageHolder = new QLabel();
-    imageHolder->setBackgroundRole(QPalette::Base);
-    imageHolder->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    imageHolder->setScaledContents(true);
+    // Setup a group box which holds everything
+    imageHolder = new QWidget();
+    QGridLayout *layout = new QGridLayout(imageHolder);
+    minusButton = new QPushButton(imageHolder);
+    minusButton->setIcon(QIcon(":/images/images/minus-icon.png"));
+    minusButton->setIconSize(QSize(15, 15));
+    minusButton->setFixedSize(QSize(25, 25));
+    minusButton->setEnabled(false);
+    plusButton = new QPushButton(imageHolder);
+    plusButton->setIcon(QIcon(":/images/images/plus-icon.png"));
+    plusButton->setIconSize(QSize(15, 15));
+    plusButton->setFixedSize(QSize(25, 25));
+
+    actualImage = new QLabel();
+    actualImage->setBackgroundRole(QPalette::Base);
+    actualImage->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    actualImage->setScaledContents(true);
+
+    scrollArea = new QScrollArea(imageHolder);
+    scrollArea->setWidget(actualImage);
+    scrollArea->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    scrollArea->setFixedWidth(512);
+    scrollArea->setBackgroundRole(QPalette::Base);
+
+    layout->addWidget(scrollArea, 0, 0, 1, 3);
+    layout->addWidget(minusButton, 1, 0, 1, 1);
+    layout->addWidget(plusButton, 1, 2, 1, 1);
+
+    imageHolder->setLayout(layout);
 
     // Choose our blank image
     imagePaths.append(":/images/images/No_image.png");
@@ -60,6 +87,8 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     // Button connections
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
     connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
+    connect(minusButton, SIGNAL(clicked(bool)), this, SLOT(zoomOut()));
+    connect(plusButton, SIGNAL(clicked(bool)), this, SLOT(zoomIn()));
 
     // Create a list of images already present
     QStringList filter("*.jpg");
@@ -123,9 +152,19 @@ void TimingCamera::changeImage(int index) {
     while(index >= imagePaths.length())
         imagePaths.append(":/images/images/No_image.png");
     QImage image(imagePaths.at(index));
-    QImage scaledImage = image.scaledToWidth(512);
-    imageHolder->setPixmap(QPixmap::fromImage(scaledImage));
-    imageHolder->setMaximumSize(scaledImage.width(), scaledImage.height());
+
+    // Scale the image up if the width is smaller than 500px
+    if(image.width() < 500)
+        image = image.scaledToWidth(500);
+
+    // Re-size the scroll area
+    int newHeight = qRound((float)image.height()/(float)image.width()*500.0);
+    scrollArea->setFixedHeight(newHeight + 12);
+
+    actualImage->setPixmap(QPixmap::fromImage(image));
+    scaleFactor = 1.0;
+
+    actualImage->resize(500, newHeight);
 }
 
 void TimingCamera::addNewImage(QString fileName) {
@@ -133,4 +172,30 @@ void TimingCamera::addNewImage(QString fileName) {
     imagePaths.append(fileName);
 
     emit newImage();
+}
+
+void TimingCamera::zoomIn() {
+    scaleImage(1.25);
+}
+
+void TimingCamera::zoomOut() {
+    scaleImage(0.8);
+}
+
+void TimingCamera::scaleImage(double factor)
+{
+    scaleFactor *= factor;
+    actualImage->resize(scaleFactor * actualImage->pixmap()->size());
+
+    adjustScrollBar(scrollArea->horizontalScrollBar(), factor);
+    adjustScrollBar(scrollArea->verticalScrollBar(), factor);
+
+    plusButton->setEnabled(scaleFactor < 3.0);
+    minusButton->setEnabled(scaleFactor > 1.0);
+}
+
+void TimingCamera::adjustScrollBar(QScrollBar *scrollBar, double factor)
+{
+    scrollBar->setValue(int(factor * scrollBar->value()
+                            + ((factor - 1) * scrollBar->pageStep()/2)));
 }
