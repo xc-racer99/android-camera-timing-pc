@@ -213,7 +213,7 @@ void TimingCamera::zoomOut() {
 void TimingCamera::scaleImage(double factor)
 {
     scaleFactor *= factor;
-    actualImage->resize(scaleFactor * actualImage->pixmap()->size());
+    actualImage->resize(scaleFactor * QSize(scrollArea->width() - 12, scrollArea->height() - 12));
 
     adjustScrollBar(scrollArea->horizontalScrollBar(), factor);
     adjustScrollBar(scrollArea->verticalScrollBar(), factor);
