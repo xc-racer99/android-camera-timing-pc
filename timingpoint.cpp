@@ -215,13 +215,6 @@ void TimingPoint::minusButtonPushed() {
 }
 
 void TimingPoint::updateImageInfo(int index) {
-    // Add a slight delay in case one of the network connections is lagging slightly
-    if(mainCamera->imagePaths.length() != secondCamera->imagePaths.length()) {
-        QEventLoop loop;
-        QTimer::singleShot(250, &loop, SLOT(quit()));
-        loop.exec();
-    }
-
     // Emit the signal to the cameras to change their image
     emit changeImage(index);
 
@@ -275,5 +268,15 @@ void TimingPoint::saveSettings() {
 void TimingPoint::incrementSliderMax() {
     int mainImages = mainCamera->imagePaths.length();
     int secondImages = mainCamera->imagePaths.length();
-    imageSlider->setMaximum(qMax(mainImages, secondImages) - 1);
+    sliderMax = qMax(mainImages, secondImages) - 1;
+    if(mainImages != secondImages) {
+        // Delay 1/2 a second to hopefully get things in sync before incrementing the slider
+        QTimer::singleShot(500, this, SLOT(doIncrementSliderMax()));
+    } else {
+        doIncrementSliderMax();
+    }
+}
+
+void TimingPoint::doIncrementSliderMax() {
+    imageSlider->setMaximum(sliderMax);
 }

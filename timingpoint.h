@@ -31,12 +31,14 @@ private:
     QString subDirectory;
     QStringList bibsUsed;
     int maxViews;
+    int sliderMax;
 
 signals:
     void changeImage(int index);
 private slots:
     void saveSettings();
     void incrementSliderMax();
+    void doIncrementSliderMax();
     void updateImageInfo(int index);
     // Button handlers
     void submitButtonPushed();
