@@ -16,13 +16,15 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // Create a file dialog box
+    QFileDialog *fileDialog;
     while(directory.isEmpty()) {
-        QFileDialog *fileDialog = new QFileDialog();
+        fileDialog = new QFileDialog();
         fileDialog->setFileMode(QFileDialog::Directory);
         if(fileDialog->exec()) {
             directory = fileDialog->selectedFiles().at(0) + QDir::separator();
         }
     }
+    delete fileDialog;
 
     // Set the menu bars
     // Initialize variables
@@ -49,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(actionQuit, SIGNAL(triggered(bool)), this, SLOT(quit()));
 
     // Create the layout
-    QScrollArea *scrollArea = new QScrollArea();
+    QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     QWidget *container = new QWidget(scrollArea);

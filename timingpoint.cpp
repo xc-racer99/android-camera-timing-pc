@@ -31,6 +31,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     QDir *dir = new QDir(subDirectory);
     if(!dir->exists())
         dir->mkpath(subDirectory);
+    delete dir;
 
     // Create our camera devices
     mainCamera = new TimingCamera(subDirectory + "Main/", ip, this);
@@ -134,6 +135,11 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
     csvFile->open(QFile::Append | QFile::ReadOnly);
+}
+
+TimingPoint::~TimingPoint() {
+    csvFile->close();
+    delete csvFile;
 }
 
 void TimingPoint::submitButtonPushed() {

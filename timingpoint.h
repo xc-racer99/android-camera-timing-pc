@@ -16,6 +16,7 @@ class TimingPoint : public QGroupBox
     Q_OBJECT
 public:
     explicit TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, QWidget *parent = 0);
+    ~TimingPoint();
 private:
     void startBackgroundThread(QString ip, QString name);
 

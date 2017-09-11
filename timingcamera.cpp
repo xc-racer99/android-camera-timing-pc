@@ -57,7 +57,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     plusButton->setIconSize(QSize(15, 15));
     plusButton->setFixedSize(QSize(25, 25));
 
-    actualImage = new QLabel();
+    actualImage = new QLabel(imageHolder);
     actualImage->setBackgroundRole(QPalette::Base);
     actualImage->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     actualImage->setScaledContents(true);
@@ -99,6 +99,12 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     // Start the image saving thread
     startBackgroundThread();
+}
+
+TimingCamera::~TimingCamera() {
+    delete ipAddress;
+    delete statusBox;
+    delete imageHolder;
 }
 
 void TimingCamera::reconnectToServer() {

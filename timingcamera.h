@@ -14,6 +14,7 @@ class TimingCamera : public QObject
     Q_OBJECT
 public:
     explicit TimingCamera(QString dir, QString ip, QObject *parent = 0);
+    ~TimingCamera();
 
     QGroupBox *statusBox;
     QWidget *imageHolder;
