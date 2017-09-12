@@ -153,6 +153,16 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
     csvFile->open(QFile::Append | QFile::ReadOnly);
+
+    // Create a hash table of all times and bibs so we don't double them
+    QTextStream in(csvFile);
+    QString line;
+    QStringList list;
+    while(in.readLineInto(&line)) {
+        list = line.split(',', QString::SkipEmptyParts);
+        if (list.length() == 2)
+            hash.insert(list.at(0), list.at(1));
+    }
 }
 
 TimingPoint::~TimingPoint() {
@@ -195,18 +205,32 @@ void TimingPoint::submitButtonPushed() {
         }
 
         if(write) {
+            QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
+            QString actualTime = roundTime(time, i);
+
+            // Make sure we haven't tried using this time already
+            QString prevBib = hash[actualTime];
+            if(!prevBib.isEmpty()) {
+                // We've used this timestamp, warn
+                QMessageBox *msgBox = new QMessageBox(this);
+                msgBox->setText(QString("This timestamp has already been used for bib %1.  Continue?").arg(prevBib));
+                msgBox->setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+                int ret = msgBox->exec();
+                if(ret == QMessageBox::No) {
+                    delete msgBox;
+                    return;
+                } else {
+                    delete msgBox;
+                }
+            }
+            out << actualTime + "," + bibnum + "\n";
+
+            // Add the timestamp and the bib number
+            hash.insert(actualTime, bibnum);
+
             // Add this bid to the used bibs
             bibsUsed.append(bibnum);
 
-            QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
-            // Convert time to hundreths, for nth bib add .1s for each
-            int dsecs = qRound((double)time.msec()/10.0) + 10*i;
-            while(dsecs >= 100) {
-                dsecs -= 100;
-                time = time.addMSecs(1000);
-            }
-            QString actualTime((time.toString("hh:mm:ss") + ".%1").arg(dsecs));
-            out << actualTime + "," + bibnum + "\n";
             csvFile->flush();
         }
     }
@@ -242,9 +266,10 @@ void TimingPoint::updateImageInfo(int index) {
 
     //Convert the raw timestamp to user-readable string
     bool ok;
+    QDateTime time;
     qint64 temp = rawTimestamp.toLongLong(&ok);
     if(ok) {
-        QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
+        time = QDateTime::fromMSecsSinceEpoch(temp);
         timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
         // Enable the next button
         nextButton->setEnabled(true);
@@ -254,7 +279,7 @@ void TimingPoint::updateImageInfo(int index) {
         rawTimestamp = pic.baseName();
         temp = rawTimestamp.toLongLong(&ok);
         if(ok) {
-            QDateTime time = QDateTime::fromMSecsSinceEpoch(temp);
+            time = QDateTime::fromMSecsSinceEpoch(temp);
             timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
             // Enable the next button
             nextButton->setEnabled(true);
@@ -266,10 +291,21 @@ void TimingPoint::updateImageInfo(int index) {
     }
 
     // If we've already written a bib number, show it in the Line Edit
-    bibNumEdit->setText("");
+    bibNumEdit->setText(hash[roundTime(time.time(), 0)]);
 
     // Change the focus
     bibNumEdit->setFocus();
+}
+
+QString TimingPoint::roundTime(QTime time, int nth) {
+    // Convert time to hundreths, for nth bib add .1s for each
+    int dsecs = qRound((double)time.msec()/10.0) + 10*nth;
+    while(dsecs >= 100) {
+        dsecs -= 100;
+        time = time.addMSecs(1000);
+    }
+    QString actualTime((time.toString("hh:mm:ss") + ".%1").arg(dsecs));
+    return actualTime;
 }
 
 void TimingPoint::saveSettings() {

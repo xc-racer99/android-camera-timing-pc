@@ -1,13 +1,14 @@
 #ifndef TIMINGPOINT_H
 #define TIMINGPOINT_H
 
-#include <QWidget>
-#include <QSlider>
-#include <QLabel>
 #include <QDialog>
-#include <QLineEdit>
 #include <QFile>
 #include <QGroupBox>
+#include <QHash>
+#include <QLabel>
+#include <QLineEdit>
+#include <QSlider>
+#include <QWidget>
 
 #include "timingcamera.h"
 
@@ -19,6 +20,7 @@ public:
     ~TimingPoint();
 private:
     void startBackgroundThread(QString ip, QString name);
+    QString roundTime(QTime time, int nth);
 
     // Common properties
     TimingCamera *mainCamera;
@@ -32,6 +34,7 @@ private:
     QStringList bibsUsed;
     int maxViews;
     int sliderMax;
+    QHash<QString, QString> hash;
 
 signals:
     void changeImage(int index);
