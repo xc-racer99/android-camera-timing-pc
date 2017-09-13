@@ -10,6 +10,7 @@ set(CMAKE_AUTOMOC ON)
 # Find the QtWidgets library
 find_package(Qt5Widgets)
 find_package(Qt5Network)
+find_package(Qt5SerialPort)
 
 # Add resources
 qt5_add_resources(UI_RESOURCES images.qrc)
@@ -17,12 +18,14 @@ qt5_add_resources(UI_RESOURCES images.qrc)
 # Tell CMake to create the executable
 add_executable(AndroidCameraTiming main.cpp
 	mainwindow.cpp mytcpsocket.cpp
+	summitemulator.cpp
 	timingcamera.cpp timingpoint.cpp
 	${UI_RESOURCES})
 
 # Use the Widgets module from Qt 5.
 target_link_libraries(AndroidCameraTiming Qt5::Widgets)
 target_link_libraries(AndroidCameraTiming Qt5::Network)
+target_link_libraries(AndroidCameraTiming Qt5::SerialPort)
 
 # build a CPack driven installer package
 include (InstallRequiredSystemLibraries)

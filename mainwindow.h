@@ -7,6 +7,8 @@
 #include <QMenuBar>
 #include <QString>
 
+#include "summitemulator.h"
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -21,10 +23,15 @@ private:
     QMenu *menuFile;
     QAction *actionNewTimingPoint;
     QAction *actionQuit;
+
+    SummitEmulator *summit;
+    int summitDeviceNumber;
+    int channelNum;
 signals:
 
 public slots:
 private slots:
+    void newSummitEntry(int channel, QString bib, QString time);
     void newTimingPoint();
     void quit();
 };

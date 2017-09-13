@@ -33,6 +33,8 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
+    channelNum = 1;
+
     // Create a file dialog box
     QFileDialog *fileDialog;
     while(directory.isEmpty()) {
@@ -43,6 +45,39 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         }
     }
     delete fileDialog;
+
+    // Create a dialog asking about summit emulation
+    QDialog *summitInfo = new QDialog();
+    QFormLayout *dialogLayout = new QFormLayout(summitInfo);
+    QLabel *serialPortNumLabel = new QLabel(summitInfo);
+    serialPortNumLabel->setText(tr("COM Port Number:"));
+    QLineEdit *serialPortNum = new QLineEdit(summitInfo);
+    dialogLayout->addRow(serialPortNumLabel, serialPortNum);
+
+    QLabel *deviceNumberLabel = new QLabel(summitInfo);
+    deviceNumberLabel->setText(tr("Device Number:"));
+    QLineEdit *deviceNumber = new QLineEdit(summitInfo);
+    dialogLayout->addRow(deviceNumberLabel, deviceNumber);
+
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok,
+                               Qt::Horizontal, summitInfo);
+    dialogLayout->addRow(&buttonBox);
+
+    summitInfo->setLayout(dialogLayout);
+
+    connect(&buttonBox, SIGNAL(accepted()), summitInfo, SLOT(accept()));
+
+    if(summitInfo->exec() == QDialog::Accepted) {
+        // Save things
+#ifdef Q_OS_WIN
+        QString temp = QString("COM%1").arg(serialPortNum->text());
+#else
+        QString temp = serialPortNum->text();
+#endif
+        QSerialPortInfo info(temp);
+        summit = new SummitEmulator(info);
+        summitDeviceNumber = deviceNumber->text().toInt();
+    }
 
     // Set the menu bars
     // Initialize variables
@@ -93,13 +128,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             QString maxViewsString = in.readLine();
             bool ok;
             int maxViews = maxViewsString.toInt(&ok);
+            QString channelString = in.readLine();
+            int channel = channelString.toInt();
             TimingPoint *tPoint;
             if(secondIp == NULL)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", 1, this);
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", 1, channelNum++, this);
             else if(maxViewsString == NULL || !ok)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, 1, this);
-            else
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, this);
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, 1, channelNum++, this);
+            else if(channelString == NULL)
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, channelNum++, this);
+            else {
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, channel, this);
+                channelNum = qMax(channelNum, channel);
+            }
             layout->addWidget(tPoint);
         }
         settingsFile.close();
@@ -135,6 +176,11 @@ void MainWindow::newTimingPoint() {
     QLabel numViewsLabel(tr("Max times through this point:"));
     formLayout.addRow(&numViewsLabel, numViews);
 
+    // Summit channel number
+    QLineEdit *channelNumber = new QLineEdit(&dialog);
+    QLabel channelNumberLabel(tr("Summit Channel Number:"));
+    formLayout.addRow(&channelNumberLabel, channelNumber);
+
     // Buttons
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                                Qt::Horizontal, &dialog);
@@ -154,7 +200,12 @@ void MainWindow::newTimingPoint() {
 
         TimingPoint *tPoint = new TimingPoint(directory,pointName->text(),
                                               mainIp->text(), secondIp->text(),
-                                              numViews->text().toInt(), this);
+                                              numViews->text().toInt(), channelNumber->text().toInt(), this);
+        connect(tPoint, SIGNAL(newEntry(int,QString,QString)), this, SLOT(newSummitEntry(int,QString,QString)));
         layout->addWidget(tPoint);
     }
+}
+
+void MainWindow::newSummitEntry(int channel, QString bib, QString time) {
+    summit->sendData(summitDeviceNumber, channel, bib, time);
 }

@@ -39,8 +39,10 @@
 #include "timingcamera.h"
 #include "timingpoint.h"
 
-TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, QWidget *parent) : QGroupBox(parent)
+TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, int channelNum, QWidget *parent) : QGroupBox(parent)
 {
+    channel = channelNum;
+
     // Set the maximum number of times we can see someone before warning
     maxViews = maxNum;
 
@@ -231,6 +233,8 @@ void TimingPoint::submitButtonPushed() {
             // Add this bid to the used bibs
             bibsUsed.append(bibnum);
 
+            emit newEntry(channel, bibnum, actualTime);
+
             csvFile->flush();
         }
     }
@@ -315,6 +319,7 @@ void TimingPoint::saveSettings() {
     QTextStream out(&settingsFile);
     out << mainCamera->ipAddress->text() + "\n" + secondCamera->ipAddress->text();
     out << "\n" + maxViews;
+    out << "\n" + channel;
     settingsFile.flush();
     settingsFile.close();
 }
