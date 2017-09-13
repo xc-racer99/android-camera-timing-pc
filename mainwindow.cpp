@@ -17,6 +17,7 @@
  **/
 
 #include <QApplication>
+#include <QComboBox>
 #include <QDir>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -47,37 +48,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     delete fileDialog;
 
     // Create a dialog asking about summit emulation
-    QDialog *summitInfo = new QDialog();
-    QFormLayout *dialogLayout = new QFormLayout(summitInfo);
-    QLabel *serialPortNumLabel = new QLabel(summitInfo);
-    serialPortNumLabel->setText(tr("COM Port Number:"));
-    QLineEdit *serialPortNum = new QLineEdit(summitInfo);
-    dialogLayout->addRow(serialPortNumLabel, serialPortNum);
-
-    QLabel *deviceNumberLabel = new QLabel(summitInfo);
-    deviceNumberLabel->setText(tr("Device Number:"));
-    QLineEdit *deviceNumber = new QLineEdit(summitInfo);
-    dialogLayout->addRow(deviceNumberLabel, deviceNumber);
-
-    QDialogButtonBox buttonBox(QDialogButtonBox::Ok,
-                               Qt::Horizontal, summitInfo);
-    dialogLayout->addRow(&buttonBox);
-
-    summitInfo->setLayout(dialogLayout);
-
-    connect(&buttonBox, SIGNAL(accepted()), summitInfo, SLOT(accept()));
-
-    if(summitInfo->exec() == QDialog::Accepted) {
-        // Save things
-#ifdef Q_OS_WIN
-        QString temp = QString("COM%1").arg(serialPortNum->text());
-#else
-        QString temp = serialPortNum->text();
-#endif
-        QSerialPortInfo info(temp);
-        summit = new SummitEmulator(info);
-        summitDeviceNumber = deviceNumber->text().toInt();
-    }
+    getSummitInfo();
 
     // Set the menu bars
     // Initialize variables
@@ -141,6 +112,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, channel, this);
                 channelNum = qMax(channelNum, channel);
             }
+            connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
             layout->addWidget(tPoint);
         }
         settingsFile.close();
@@ -206,6 +178,35 @@ void MainWindow::newTimingPoint() {
     }
 }
 
-void MainWindow::newSummitEntry(int channel, QString bib, QString time) {
-    summit->sendData(summitDeviceNumber, channel, bib, time);
+void MainWindow::getSummitInfo() {
+    QDialog *summitInfo = new QDialog();
+    QFormLayout *dialogLayout = new QFormLayout(summitInfo);
+
+    QLabel *serialPortNumLabel = new QLabel(summitInfo);
+    serialPortNumLabel->setText(tr("Serial Port:"));
+    QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
+    QComboBox *comboBox = new QComboBox(summitInfo);
+    for(int i = 0; i < serialPorts.length(); i++) {
+        comboBox->addItem(serialPorts.at(i).portName());
+    }
+    dialogLayout->addRow(serialPortNumLabel, comboBox);
+
+    QLabel *deviceNumberLabel = new QLabel(summitInfo);
+    deviceNumberLabel->setText(tr("Device Number:"));
+    QLineEdit *deviceNumber = new QLineEdit(summitInfo);
+    dialogLayout->addRow(deviceNumberLabel, deviceNumber);
+
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok,
+                               Qt::Horizontal, summitInfo);
+    dialogLayout->addRow(&buttonBox);
+
+    summitInfo->setLayout(dialogLayout);
+
+    connect(&buttonBox, SIGNAL(accepted()), summitInfo, SLOT(accept()));
+
+    if(summitInfo->exec() == QDialog::Accepted) {
+        // Create the summit
+        summit = new SummitEmulator(serialPorts.at(comboBox->currentIndex()), deviceNumber->text());
+        summit->initialize();
+    }
 }

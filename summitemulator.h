@@ -13,17 +13,21 @@ class SummitEmulator : public QObject
 {
     Q_OBJECT
 public:
-    SummitEmulator(QSerialPortInfo info, QObject *parent = 0);
+    SummitEmulator(QSerialPortInfo info, QString deviceNum, QObject *parent = 0);
     ~SummitEmulator();
 
-    void sendData(int device, int channel, QString bib, QString time);
+    int deviceNumber;
+
+    void initialize();
 private:
     QSerialPort *serialPort;
 
     int counter;
 signals:
 private slots:
+    void receiveData();
 public slots:
+    void sendData(int channel, QString bib, QString time);
 };
 
 #endif // SUMMITEMULATOR_H

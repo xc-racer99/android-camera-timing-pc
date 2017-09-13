@@ -15,6 +15,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
 private:
+    void getSummitInfo();
     QString directory;
     QBoxLayout *layout;
 
@@ -31,7 +32,6 @@ signals:
 
 public slots:
 private slots:
-    void newSummitEntry(int channel, QString bib, QString time);
     void newTimingPoint();
     void quit();
 };
