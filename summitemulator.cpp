@@ -19,8 +19,10 @@
 #include <QByteArray>
 #include <QGridLayout>
 #include <QThread>
+#include <QTimer>
 
 #include "summitemulator.h"
+#include "3rd-Party/libcrc/include/checksum.h"
 
 SummitEmulator::SummitEmulator(QSerialPortInfo info, QString deviceNum, QObject *parent) : QObject(parent)
 {
@@ -44,54 +46,40 @@ SummitEmulator::~SummitEmulator() {
 }
 
 void SummitEmulator::initialize() {
-    connect(serialPort, SIGNAL(readyRead()), this, SLOT(receiveData()));
-    serialPort->setBaudRate(QSerialPort::Baud9600);
-    serialPort->setDataBits(QSerialPort::Data8);
-    serialPort->setStopBits(QSerialPort::OneStop);
-    serialPort->setFlowControl(QSerialPort::NoFlowControl);
-    if(serialPort->open(QIODevice::ReadWrite))
-        qDebug("Succesfully opened serial port");
+    if(!serialPort->portName().isEmpty()) {
+        serialPort->setBaudRate(QSerialPort::Baud9600);
+        serialPort->setDataBits(QSerialPort::Data8);
+        serialPort->setStopBits(QSerialPort::OneStop);
+        serialPort->setFlowControl(QSerialPort::NoFlowControl);
+        if(serialPort->open(QIODevice::ReadWrite)) {
+            qDebug("Succesfully opened serial port");
+
+            // HACK - Start sending that we're connected every 3 seconds
+            QTimer *timer = new QTimer(this);
+            timer->setInterval(3000);
+            connect(timer, SIGNAL(timeout()), this, SLOT(sendAck()));
+            timer->start();
+        }
+    }
 }
 
 void SummitEmulator::sendData(int channel, QString bib, QString time) {
     if(serialPort->isOpen()) {
-        QString data = QString("%1\t%2\t0\t0\t%3\tb\t\t%4\t%5").arg(deviceNumber).arg(counter).arg(channel).arg(bib).arg(time);
+        QString data = QString("%1\u0009%2\u00090\u00090\u0009%3\u0009b\u0009%4\u0009 %5").arg(deviceNumber).arg(counter).arg(channel).arg(bib).arg(time);
         QByteArray temp = data.toLatin1();
-        quint16 crc = qChecksum(temp.data(), temp.length());
-        QByteArray toSend(QString("{%1}%2X\n").arg(data).arg(crc).toLatin1());
+        quint16 crc = crc_16((unsigned const char*)strdup(temp.constData()), (size_t)temp.length());
+        QByteArray toSend(QString("{%1}%2\u000D\u000A").arg(data).arg(crc, 0, 16).toLatin1());
+        qDebug("Sending data %s", toSend.constData());
         serialPort->write(toSend);
         serialPort->flush();
     }
     counter++;
 }
 
-void SummitEmulator::receiveData() {
-    QString input = serialPort->readLine();
-    // Remove leading {
-    input.resize(1);
-    QStringList parts = input.split('}');
-    qDebug("Data is %s", input.toLatin1().constData());
-    if(parts.length() == 2) {
-        // This is the actual data
-        QString data = parts.at(0);
-        // This is the CRC-16
-        QString crc = parts.at(1);
-        QByteArray temp = data.toLatin1();
-        if(qChecksum(temp.data(), temp.length()) == crc.toInt(0, 16)) {
-            // This is an actual packet, determine what to do
-            if(data.contains(".+AK.+") || data.contains(".+SY.+")){
-                // This is an AK from somewhere else, or a sync command, both of which we ignore
-            } else if(data.contains(QString("TK %1").arg(deviceNumber))) {
-                QString dataToWrite = QString("AK %1").arg(deviceNumber);
-                QByteArray tempData = dataToWrite.toLatin1();
-                quint16 crc = qChecksum(tempData.data(), tempData.length());
-                QByteArray toWrite(QString("{%1}%2X\n").arg(dataToWrite).arg(crc).toLatin1());
-                serialPort->write(toWrite);
-            } else {
-                // Unknown command
-                qDebug("Unknown command %s", data.toLatin1().constData());
-            }
-        }
-    }
+void SummitEmulator::sendAck() {
+    QString dataToWrite = QString("AK %1").arg(deviceNumber);
+    QByteArray tempData = dataToWrite.toLatin1();
+    quint16 crc = crc_16((unsigned const char*)strdup(tempData.constData()), (size_t)tempData.length());
+    QByteArray toWrite(QString("{%1}%2\u000D\u000A").arg(dataToWrite).arg(crc, 0, 16).toLatin1());
+    serialPort->write(toWrite);
 }
-

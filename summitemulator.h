@@ -25,7 +25,7 @@ private:
     int counter;
 signals:
 private slots:
-    void receiveData();
+    void sendAck();
 public slots:
     void sendData(int channel, QString bib, QString time);
 };

@@ -192,7 +192,7 @@ void MainWindow::getSummitInfo() {
     dialogLayout->addRow(serialPortNumLabel, comboBox);
 
     QLabel *deviceNumberLabel = new QLabel(summitInfo);
-    deviceNumberLabel->setText(tr("Device Number:"));
+    deviceNumberLabel->setText(tr("Summit Device Number:"));
     QLineEdit *deviceNumber = new QLineEdit(summitInfo);
     dialogLayout->addRow(deviceNumberLabel, deviceNumber);
 
@@ -208,5 +208,7 @@ void MainWindow::getSummitInfo() {
         // Create the summit
         summit = new SummitEmulator(serialPorts.at(comboBox->currentIndex()), deviceNumber->text());
         summit->initialize();
+    } else {
+        summit = new SummitEmulator(QSerialPortInfo(), "1");
     }
 }

@@ -11,12 +11,19 @@ SOURCES += \
     timingcamera.cpp \
     summitemulator.cpp
 
+SOURCES += \
+    3rd-Party/libcrc/src/crc16.c
+
+INCLUDEPATH += \
+    3rd-Party/libcrc/include
+
 HEADERS += \
     timingpoint.h \
     mytcpsocket.h \
     mainwindow.h \
     timingcamera.h \
-    summitemulator.h
+    summitemulator.h \
+    3rd-Party/libcrc/include/checksum.h
 
 RESOURCES += \
     images.qrc
