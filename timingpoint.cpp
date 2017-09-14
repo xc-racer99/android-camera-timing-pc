@@ -317,9 +317,8 @@ void TimingPoint::saveSettings() {
     QFile settingsFile(subDirectory + ".settings");
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
-    out << mainCamera->ipAddress->text() + "\n" + secondCamera->ipAddress->text();
-    out << "\n" + maxViews;
-    out << "\n" + channel;
+    out << mainCamera->ipAddress->text() + "\n" + secondCamera->ipAddress->text()
+        + "\n" + maxViews + "\n" + channel;
     settingsFile.flush();
     settingsFile.close();
 }
