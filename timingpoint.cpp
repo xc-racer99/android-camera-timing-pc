@@ -154,17 +154,22 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
 
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
-    csvFile->open(QFile::Append | QFile::ReadOnly);
 
     // Create a hash table of all times and bibs so we don't double them
-    QTextStream in(csvFile);
-    QString line;
-    QStringList list;
-    while(in.readLineInto(&line)) {
-        list = line.split(',', QString::SkipEmptyParts);
-        if (list.length() == 2)
-            hash.insert(list.at(0), list.at(1));
+    if(csvFile->open(QFile::ReadOnly)) {
+        QTextStream in(csvFile);
+        QString line;
+        QStringList list;
+        while(!in.atEnd()) {
+            line = in.readLine();
+            list = line.split(',', QString::SkipEmptyParts);
+            if (list.length() == 2) {
+                hash.insert(list.at(0), list.at(1));
+            }
+        }
     }
+    csvFile->close();
+    csvFile->open(QFile::Append);
 }
 
 TimingPoint::~TimingPoint() {
