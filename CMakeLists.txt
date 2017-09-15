@@ -25,8 +25,12 @@ add_executable(AndroidCameraTiming main.cpp
 # Add the libcrc directory
 include_directories ("${PROJECT_SOURCE_DIR}/3rd-Party/libcrc/include")
 add_subdirectory (3rd-Party/libcrc)
- 
-target_link_libraries (AndroidCameraTiming LibCRC)
+
+# Add bibnumber
+include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
+add_subdirectory(3rd-Party/bibnumber)
+
+target_link_libraries (AndroidCameraTiming bibnumber LibCRC)
 
 # Use the Widgets module from Qt 5.
 target_link_libraries(AndroidCameraTiming Qt5::Widgets)
