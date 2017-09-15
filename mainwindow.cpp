@@ -52,20 +52,26 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Set the menu bars
     // Initialize variables
-    menubar = new QMenuBar(this);
-    menuFile = new QMenu(menubar);
-    actionNewTimingPoint = new QAction(this);
-    actionQuit = new QAction(this);
+    QMenuBar *menubar = new QMenuBar(this);
+    QMenu *menuFile = new QMenu(menubar);
+    QAction *actionNewTimingPoint = new QAction(this);
+    QAction *actionQuit = new QAction(this);
+    QMenu *menuSummit = new QMenu(menubar);
+    QAction *actionSummitSettings = new QAction(this);
 
     // Set the text
     actionNewTimingPoint->setText("New Timing Point");
     actionQuit->setText("Quit");
     menuFile->setTitle("File");
+    menuSummit->setTitle(tr("Summit"));
+    actionSummitSettings->setText(tr("Settings"));
 
     // Add the menu items to the file menu and it to the menu
     menubar->addAction(menuFile->menuAction());
+    menubar->addAction(menuSummit->menuAction());
     menuFile->addAction(actionNewTimingPoint);
     menuFile->addAction(actionQuit);
+    menuSummit->addAction(actionSummitSettings);
 
     // Set the menu bar
     this->setMenuBar(menubar);
@@ -73,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Make connections
     connect(actionNewTimingPoint, SIGNAL(triggered(bool)), this, SLOT(newTimingPoint()));
     connect(actionQuit, SIGNAL(triggered(bool)), this, SLOT(quit()));
+    connect(actionSummitSettings, SIGNAL(triggered(bool)), this, SLOT(getSummitInfo()));
 
     // Create the layout
     QScrollArea *scrollArea = new QScrollArea(this);

@@ -15,15 +15,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
 private:
-    void getSummitInfo();
     QString directory;
     QBoxLayout *layout;
-
-    // Menu bars and items
-    QMenuBar *menubar;
-    QMenu *menuFile;
-    QAction *actionNewTimingPoint;
-    QAction *actionQuit;
 
     SummitEmulator *summit;
     int summitDeviceNumber;
@@ -32,6 +25,7 @@ signals:
 
 public slots:
 private slots:
+    void getSummitInfo();
     void newTimingPoint();
     void quit();
 };
