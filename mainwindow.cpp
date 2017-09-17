@@ -213,8 +213,12 @@ void MainWindow::getSummitInfo() {
 
     if(summitInfo->exec() == QDialog::Accepted) {
         // Create the summit
-        summit = new SummitEmulator(serialPorts.at(comboBox->currentIndex()), deviceNumber->text());
-        summit->initialize();
+        if(serialPorts.length() >0) {
+            summit = new SummitEmulator(serialPorts.at(comboBox->currentIndex()), deviceNumber->text());
+            summit->initialize();
+        } else {
+            summit = new SummitEmulator(QSerialPortInfo(), deviceNumber->text());
+        }
     } else {
         summit = new SummitEmulator(QSerialPortInfo(), "1");
     }
