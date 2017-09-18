@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1.0)
 
-project(AndroidCameraTiming)
+project("Camera Timing for Android - PC")
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -39,4 +39,28 @@ set (CPACK_RESOURCE_FILE_LICENSE
      "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
 set (CPACK_PACKAGE_VERSION_MAJOR 0)
 set (CPACK_PACKAGE_VERSION_MINOR 1)
+
+install(TARGETS AndroidCameraTiming
+	RUNTIME
+	DESTINATION .)
+
+if(WIN32)
+	# package the needed libraries, superbuild installs them into ${PROJECT_BINARY_DIR}
+	file(GLOB DLLs ${PROJECT_BINARY_DIR}/../install/ProgramFiles/bin/*.dll)
+	install(FILES ${DLLs}
+		DESTINATION .)
+	# other qt files
+	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/plugins
+		DESTINATION .)
+	# qt.conf so it finds the plugins
+	install(FILES qt.conf
+		DESTINATION .)
+	# libstdc++ library - Fix-ME - this should probably not be hard-coded...
+	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libstdc++-6.dll
+		DESTINATION .)
+	# NSIS start menu links will point to executables in this directory
+	set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+	set(CPACK_PACKAGE_EXECUTABLES "AndroidCameraTiming;Camera Timing for Android - PC")
+endif()
+
 include (CPack)
