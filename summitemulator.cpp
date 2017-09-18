@@ -70,7 +70,7 @@ void SummitEmulator::initialize() {
 
 void SummitEmulator::sendData(int channel, QString bib, QString time) {
     if(serialPort->isOpen()) {
-        QString data = QString("%1\u0009%2\u00090\u00090\u0009%3\u0009b\u0009%4\u0009 %5").arg(deviceNumber).arg(counter).arg(channel).arg(bib).arg(time);
+        QString data = QString("%1\u0009%2\u00090\u00090\u0009%3\u0009s\u0009%4\u0009 %5").arg(deviceNumber).arg(counter).arg(channel).arg(bib).arg(time);
         QByteArray temp = data.toLatin1();
         quint16 crc = crc_16((unsigned const char*)strdup(temp.constData()), (size_t)temp.length());
         QByteArray toSend(QString("{%1}%2\u000D\u000A").arg(data).arg(crc, 0, 16).toLatin1());
