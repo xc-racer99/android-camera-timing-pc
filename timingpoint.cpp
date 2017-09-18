@@ -330,7 +330,7 @@ void TimingPoint::saveSettings() {
 
 void TimingPoint::incrementSliderMax() {
     int mainImages = mainCamera->imagePaths.length();
-    int secondImages = mainCamera->imagePaths.length();
+    int secondImages = secondCamera->imagePaths.length();
     sliderMax = qMax(mainImages, secondImages) - 1;
     if(mainImages != secondImages) {
         // Delay 1/2 a second to hopefully get things in sync before incrementing the slider
