@@ -47,6 +47,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     }
     delete fileDialog;
 
+    // Create the summit
+    summit = new SummitEmulator;
+
     // Create a dialog asking about summit emulation
     getSummitInfo();
 
@@ -203,6 +206,10 @@ void MainWindow::getSummitInfo() {
     QLineEdit *deviceNumber = new QLineEdit(summitInfo);
     dialogLayout->addRow(deviceNumberLabel, deviceNumber);
 
+    int currentNum = summit->getDeviceNumber();
+    if(currentNum != 0)
+        deviceNumber->setText(QString("%1").arg(currentNum));
+
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok,
                                Qt::Horizontal, summitInfo);
     dialogLayout->addRow(&buttonBox);
@@ -212,14 +219,11 @@ void MainWindow::getSummitInfo() {
     connect(&buttonBox, SIGNAL(accepted()), summitInfo, SLOT(accept()));
 
     if(summitInfo->exec() == QDialog::Accepted) {
-        // Create the summit
-        if(serialPorts.length() >0) {
-            summit = new SummitEmulator(serialPorts.at(comboBox->currentIndex()), deviceNumber->text());
-            summit->initialize();
-        } else {
-            summit = new SummitEmulator(QSerialPortInfo(), deviceNumber->text());
-        }
-    } else {
-        summit = new SummitEmulator(QSerialPortInfo(), "1");
+        if(serialPorts.length() > 0)
+            summit->setPort(serialPorts.at(comboBox->currentIndex()));
+        bool ok;
+        int deviceNum = deviceNumber->text().toInt(&ok);
+        if(ok)
+            summit->setDeviceNumber(deviceNum);
     }
 }

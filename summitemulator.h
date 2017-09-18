@@ -13,8 +13,13 @@ class SummitEmulator : public QObject
 {
     Q_OBJECT
 public:
-    SummitEmulator(QSerialPortInfo info, QString deviceNum, QObject *parent = 0);
+    SummitEmulator(QObject *parent = 0);
     ~SummitEmulator();
+
+    int getDeviceNumber();
+
+    void setDeviceNumber(int number);
+    void setPort(QSerialPortInfo info);
 
     int deviceNumber;
 

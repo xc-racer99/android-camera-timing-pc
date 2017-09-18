@@ -24,25 +24,30 @@
 #include "summitemulator.h"
 #include "3rd-Party/libcrc/include/checksum.h"
 
-SummitEmulator::SummitEmulator(QSerialPortInfo info, QString deviceNum, QObject *parent) : QObject(parent)
+SummitEmulator::SummitEmulator(QObject *parent) : QObject(parent)
 {
     // Initialize the QSerialPort
     serialPort = new QSerialPort();
-    serialPort->setPort(info);
 
-    // Convert the device number
-    bool ok;
-    int temp = deviceNum.toInt(&ok);
-    if(ok)
-        deviceNumber = temp;
-    else
-        deviceNumber = 1;
+    deviceNumber = 0;
 
     counter = 1;
 }
 
 SummitEmulator::~SummitEmulator() {
     serialPort->close();
+}
+
+int SummitEmulator::getDeviceNumber() {
+    return deviceNumber;
+}
+
+void SummitEmulator::setPort(QSerialPortInfo info) {
+    serialPort->setPort(info);
+}
+
+void SummitEmulator::setDeviceNumber(int number) {
+    deviceNumber = number;
 }
 
 void SummitEmulator::initialize() {
