@@ -20,7 +20,7 @@ private:
 
     SummitEmulator *summit;
     int summitDeviceNumber;
-    int channelNum;
+    int nextChannelNum;
 signals:
 
 public slots:

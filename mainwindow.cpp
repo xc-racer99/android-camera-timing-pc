@@ -34,7 +34,7 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-    channelNum = 1;
+    nextChannelNum = 1;
 
     // Create a file dialog box
     QFileDialog *fileDialog;
@@ -113,14 +113,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             int channel = channelString.toInt();
             TimingPoint *tPoint;
             if(secondIp == NULL)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", 1, channelNum++, this);
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", 1, nextChannelNum++, this);
             else if(maxViewsString == NULL || !ok)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, 1, channelNum++, this);
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, 1, nextChannelNum++, this);
             else if(channelString == NULL)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, channelNum++, this);
+                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, nextChannelNum++, this);
             else {
                 tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, channel, this);
-                channelNum = qMax(channelNum, channel);
+                nextChannelNum = qMax(nextChannelNum, channel);
             }
             connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
             layout->addWidget(tPoint);
@@ -161,6 +161,7 @@ void MainWindow::newTimingPoint() {
     // Summit channel number
     QLineEdit *channelNumber = new QLineEdit(&dialog);
     QLabel channelNumberLabel(tr("Summit Channel Number:"));
+    channelNumber->setText(QString("%1").arg(nextChannelNum));
     formLayout.addRow(&channelNumberLabel, channelNumber);
 
     // Buttons
