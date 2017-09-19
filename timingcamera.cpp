@@ -180,7 +180,6 @@ void TimingCamera::changeImage(int index) {
             bool ok;
             QFileInfo file(entries.at(entries.length() - 1).file);
             QString temp = file.baseName();
-            qDebug("%s", temp.toLatin1().constData());
             int num = temp.toLong(&ok);
             if(ok)
                 newName = QString("%1/%2.png").arg(directory).arg(num + 1);
