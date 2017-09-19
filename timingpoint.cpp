@@ -305,8 +305,10 @@ void TimingPoint::updateImageInfo(int index) {
     // If we didn't find a number, check if we received one from the camera
     if(bibNumEdit->text().isEmpty()) {
         int number = mainCamera->entries.at(index).bibNumber;
-        if(number != 0 && number == secondCamera->entries.at(index).bibNumber)
+        if(number != 0 && number == secondCamera->entries.at(index).bibNumber) {
             bibNumEdit->setText(QString("%1").arg(number));
+            submitButtonPushed();
+        }
     }
 
     // Change the focus
