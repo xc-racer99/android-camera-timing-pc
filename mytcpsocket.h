@@ -16,7 +16,7 @@ public:
 
 signals:
     void finished();
-    void newImage(QString filename);
+    void newImage(QString filename, int bibNumber);
     void serverStatus(QString status);
 public slots:
     void process();

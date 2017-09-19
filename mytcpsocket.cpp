@@ -18,6 +18,11 @@
 
 #include <QFile>
 #include <QTcpSocket>
+
+#include "pipeline.h"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
 #include "mytcpsocket.h"
 
 MyTcpSocket::MyTcpSocket(QString host, QString dir)
@@ -62,7 +67,23 @@ void MyTcpSocket::process() {
                 }
 
                 file.close();
-                emit newImage(file.fileName());
+
+                // Run the OCR
+                cv::Mat image = cv::imread(file.fileName().toLatin1().constData(), 1);
+                int bibNumber = 0;
+                if (image.empty()) {
+                    qDebug("ERROR:Failed to open image file %s", file.fileName().toLatin1().constData());
+                } else {
+                    pipeline::Pipeline pipeline;
+                    std::vector<int> bibNumbers;
+                    pipeline.processImage(image, /*svmModel*/ "", /*darkOnLight*/ 1, bibNumbers);
+                    if(!bibNumbers.empty()) {
+                        qDebug("%d", bibNumbers.at(0));
+                        bibNumber = bibNumbers.at(0);
+                    }
+                }
+
+                emit newImage(file.fileName(), bibNumber);
             }
         }
     }

@@ -23,6 +23,7 @@
 #include <QScrollArea>
 #include <QSlider>
 #include <QThread>
+#include <QTimer>
 
 #include "mytcpsocket.h"
 #include "timingcamera.h"
@@ -162,7 +163,7 @@ void TimingCamera::startBackgroundThread() {
 
     // Connect signals and slots
     connect(socket, SIGNAL(serverStatus(QString)), this, SLOT(setConnectionStatus(QString)));
-    connect(socket, SIGNAL(newImage(QString)), this, SLOT(addNewImage(QString)));
+    connect(socket, SIGNAL(newImage(QString,int)), this, SLOT(addNewImage(QString,int)));
     connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
     connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
     connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
@@ -206,11 +207,12 @@ void TimingCamera::changeImage(int index) {
     actualImage->resize(500, newHeight);
 }
 
-void TimingCamera::addNewImage(QString fileName) {
+void TimingCamera::addNewImage(QString fileName, int bibNumber) {
     // Add the new image to the list of paths
-    entries.append(Entry(fileName, 0));
+    entries.append(Entry(fileName, bibNumber));
 
-    emit newImage();
+    // Create a delay of 1s to hopefully give time for the other thread(s) to finish if they're still going
+    QTimer::singleShot(1000, this, SIGNAL(newImage()));
 }
 
 void TimingCamera::zoomIn() {

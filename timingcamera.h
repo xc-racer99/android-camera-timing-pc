@@ -48,7 +48,7 @@ signals:
 public slots:
     void changeImage(int index);
 private slots:
-    void addNewImage(QString fileName);
+    void addNewImage(QString fileName, int bibNumber);
     void changeIpDialog();
     void reconnectToServer();
     void setConnectionStatus(QString status);
