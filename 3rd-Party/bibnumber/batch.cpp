@@ -82,7 +82,7 @@ static int processSingleImage(
 	}
 
 	/* process image */
-	res = pipeline.processImage(image, svmModel, bibNumbers);
+	res = pipeline.processImage(image, svmModel, 1, bibNumbers);
 	if (res < 0) {
 		std::cerr << "ERROR: Could not process image" << std::endl;
 		return -1;
