@@ -24,7 +24,6 @@ static void vectorAtoi(std::vector<int>&numbers, std::vector<std::string>&text)
 int Pipeline::processImage(
 		cv::Mat& img,
 		std::string svmModel,
-		int darkOnLight,
 		std::vector<int>& bibNumbers) {
 #if 0
 	int res;
@@ -105,7 +104,7 @@ int Pipeline::processImage(
 	IplImage ipl_img = img;
 	std::vector<std::string> text;
 	struct TextDetectionParams params = {
-						darkOnLight, /* darkOnLight */
+						1, /* darkOnLight */
 						15, /* maxStrokeLength */
 						11, /* minCharacterHeight */
 						100, /* maxImgWidthToTextRatio */
