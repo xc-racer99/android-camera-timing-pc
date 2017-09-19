@@ -146,9 +146,9 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
 
     // Set the initial image if we already have images
-    if(mainCamera->imagePaths.length() > 1) {
+    if(mainCamera->entries.length() > 1) {
         // Set the image slider length to the number of images we have
-        imageSlider->setMaximum(mainCamera->imagePaths.length() - 1);
+        imageSlider->setMaximum(mainCamera->entries.length() - 1);
         imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
     }
 
@@ -270,7 +270,7 @@ void TimingPoint::updateImageInfo(int index) {
     emit changeImage(index);
 
     // Update the timestamp
-    QFileInfo pic = mainCamera->imagePaths.at(index);
+    QFileInfo pic = mainCamera->entries.at(index).file;
     QString rawTimestamp = pic.baseName();
 
     //Convert the raw timestamp to user-readable string
@@ -284,7 +284,7 @@ void TimingPoint::updateImageInfo(int index) {
         nextButton->setEnabled(true);
     } else {
         // Presumably there was no image at the main camera, so try getting the timestamp from the second image
-        pic = secondCamera->imagePaths.at(index);
+        pic = secondCamera->entries.at(index).file;
         rawTimestamp = pic.baseName();
         temp = rawTimestamp.toLongLong(&ok);
         if(ok) {
@@ -301,6 +301,13 @@ void TimingPoint::updateImageInfo(int index) {
 
     // If we've already written a bib number, show it in the Line Edit
     bibNumEdit->setText(hash[roundTime(time.time(), 0)]);
+
+    // If we didn't find a number, check if we received one from the camera
+    if(bibNumEdit->text().isEmpty()) {
+        int number = mainCamera->entries.at(index).bibNumber;
+        if(number != 0 && number == secondCamera->entries.at(index).bibNumber)
+            bibNumEdit->setText(QString("%1").arg(number));
+    }
 
     // Change the focus
     bibNumEdit->setFocus();
@@ -329,12 +336,12 @@ void TimingPoint::saveSettings() {
 }
 
 void TimingPoint::incrementSliderMax() {
-    int mainImages = mainCamera->imagePaths.length();
-    int secondImages = secondCamera->imagePaths.length();
+    int mainImages = mainCamera->entries.length();
+    int secondImages = secondCamera->entries.length();
     sliderMax = qMax(mainImages, secondImages) - 1;
     if(mainImages != secondImages) {
         // Delay 1/2 a second to hopefully get things in sync before incrementing the slider
-        QTimer::singleShot(500, this, SLOT(doIncrementSliderMax()));
+        QTimer::singleShot(750, this, SLOT(doIncrementSliderMax()));
     } else {
         doIncrementSliderMax();
     }

@@ -93,7 +93,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     imageHolder->setLayout(layout);
 
     // Choose our blank image
-    imagePaths.append(":/images/images/No_image.png");
+    entries.append(Entry(":/images/images/No_image.png", 0));
 
     statusLayout->addWidget(ipAddressLabel, 0, 0, 1, 1);
     statusLayout->addWidget(ipAddress, 0, 1, 1, 1);
@@ -113,7 +113,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     QStringList filter("*.jpg");
     QFileInfoList initialFileInfo = temp.entryInfoList(filter, QDir::Files, QDir::Name);
     for(int i = 0; i < initialFileInfo.length(); i++)
-        imagePaths.append(initialFileInfo.at(i).absoluteFilePath());
+        entries.append(Entry(initialFileInfo.at(i).absoluteFilePath(), 0));
 
     // Start the image saving thread
     startBackgroundThread();
@@ -174,9 +174,21 @@ void TimingCamera::startBackgroundThread() {
 
 void TimingCamera::changeImage(int index) {
     // Account for the possibilty that we missed image(s)
-    while(index >= imagePaths.length())
-        imagePaths.append(":/images/images/No_image.png");
-    QImageReader reader(imagePaths.at(index));
+    while(index >= entries.length()) {
+        QString newName = QString("%1/1.png").arg(directory);
+        if(entries.length() > 0) {
+            bool ok;
+            QFileInfo file(entries.at(entries.length() - 1).file);
+            QString temp = file.baseName();
+            qDebug("%s", temp.toLatin1().constData());
+            int num = temp.toLong(&ok);
+            if(ok)
+                newName = QString("%1/%2.png").arg(directory).arg(num + 1);
+        }
+        QFile::copy(":images/images/No_image.png", newName);
+        entries.append(Entry(newName, 0));
+    }
+    QImageReader reader(entries.at(index).file);
     reader.setAutoTransform(true);
 
     QImage image = reader.read();
@@ -197,7 +209,7 @@ void TimingCamera::changeImage(int index) {
 
 void TimingCamera::addNewImage(QString fileName) {
     // Add the new image to the list of paths
-    imagePaths.append(fileName);
+    entries.append(Entry(fileName, 0));
 
     emit newImage();
 }

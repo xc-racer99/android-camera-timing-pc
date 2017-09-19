@@ -16,9 +16,16 @@ public:
     explicit TimingCamera(QString dir, QString ip, QObject *parent = 0);
     ~TimingCamera();
 
+    struct Entry {
+        QString file;
+        int bibNumber;
+
+        Entry(QString fileName, int bibNum) : file(fileName), bibNumber(bibNum) {}
+    };
+
     QGroupBox *statusBox;
     QWidget *imageHolder;
-    QStringList imagePaths;
+    QList<Entry> entries;
     QLabel *ipAddress;
 private:
     QLabel *actualImage;
