@@ -76,7 +76,11 @@ void MyTcpSocket::process() {
                 } else {
                     pipeline::Pipeline pipeline;
                     std::vector<int> bibNumbers;
-                    pipeline.processImage(image, /*svmModel*/ "", /*darkOnLight*/ 1, bibNumbers);
+                    QString svmModel = "";
+                    QFile svmFile(directory + "../../svm.xml");
+                    if(svmFile.exists())
+                        svmModel = directory + "../../svm.xml";
+                    pipeline.processImage(image, svmModel.toLatin1().constData(), /*darkOnLight*/ 1, bibNumbers);
                     if(!bibNumbers.empty()) {
                         qDebug("%d", bibNumbers.at(0));
                         bibNumber = bibNumbers.at(0);

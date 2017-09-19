@@ -25,6 +25,7 @@ signals:
 
 public slots:
 private slots:
+    void changeSvmModel();
     void getSummitInfo();
     void newTimingPoint();
     void quit();

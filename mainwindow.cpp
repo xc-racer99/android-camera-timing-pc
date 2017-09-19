@@ -61,6 +61,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QAction *actionQuit = new QAction(this);
     QMenu *menuSummit = new QMenu(menubar);
     QAction *actionSummitSettings = new QAction(this);
+    QMenu *ocrSettings = new QMenu(this);
+    QAction *svmModel = new QAction(this);
 
     // Set the text
     actionNewTimingPoint->setText("New Timing Point");
@@ -68,13 +70,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     menuFile->setTitle("File");
     menuSummit->setTitle(tr("Summit"));
     actionSummitSettings->setText(tr("Settings"));
+    ocrSettings->setTitle(tr("OCR"));
+    svmModel->setText(tr("Choose SVM Model..."));
 
     // Add the menu items to the file menu and it to the menu
     menubar->addAction(menuFile->menuAction());
     menubar->addAction(menuSummit->menuAction());
+    menubar->addAction(ocrSettings->menuAction());
     menuFile->addAction(actionNewTimingPoint);
     menuFile->addAction(actionQuit);
     menuSummit->addAction(actionSummitSettings);
+    ocrSettings->addAction(svmModel);
 
     // Set the menu bar
     this->setMenuBar(menubar);
@@ -83,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(actionNewTimingPoint, SIGNAL(triggered(bool)), this, SLOT(newTimingPoint()));
     connect(actionQuit, SIGNAL(triggered(bool)), this, SLOT(quit()));
     connect(actionSummitSettings, SIGNAL(triggered(bool)), this, SLOT(getSummitInfo()));
+    connect(svmModel, SIGNAL(triggered(bool)), this, SLOT(changeSvmModel()));
 
     // Create the layout
     QScrollArea *scrollArea = new QScrollArea(this);
@@ -226,5 +233,18 @@ void MainWindow::getSummitInfo() {
         int deviceNum = deviceNumber->text().toInt(&ok);
         if(ok)
             summit->setDeviceNumber(deviceNum);
+    }
+}
+
+void MainWindow::changeSvmModel() {
+    QString fileName = QFileDialog::getOpenFileName(this,
+            tr("Open SVM Model"), QString(), tr("SVM Files (*.xml)"));
+    if(!fileName.isEmpty()) {
+        // Remove the existing xml before copying the new one
+        QFile svmFile(directory + "svm.xml");
+        if(svmFile.exists())
+            svmFile.remove();
+        QFile newSvmFile(fileName);
+        newSvmFile.copy(directory + "svm.xml");
     }
 }
