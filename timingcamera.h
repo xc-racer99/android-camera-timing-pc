@@ -36,8 +36,6 @@ private:
     QPushButton *plusButton;
     QScrollArea *scrollArea;
     QString directory;
-    QString svmModel;
-    int darkOnLight;
 
     float scaleFactor;
 
@@ -49,8 +47,6 @@ signals:
     void newImage();
 public slots:
     void changeImage(int index);
-    void setSvmModel(QString model);
-    void setLightOnDark(bool light);
 private slots:
     void addNewImage(QString fileName);
     void changeIpDialog();

@@ -27,16 +27,11 @@
 #include "mytcpsocket.h"
 #include "timingcamera.h"
 
-#include "pipeline.h"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-
 TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(parent)
 {
     directory = dir;
+
     scaleFactor = 1.0;
-    svmModel = "";
-    darkOnLight = 1;
 
     QDir temp(directory);
     if(!temp.exists())
@@ -130,17 +125,6 @@ TimingCamera::~TimingCamera() {
     delete imageHolder;
 }
 
-void TimingCamera::setLightOnDark(bool light) {
-    if(light)
-        darkOnLight = 0;
-    else
-        darkOnLight = 1;
-}
-
-void TimingCamera::setSvmModel(QString model) {
-    svmModel = model;
-}
-
 void TimingCamera::reconnectToServer() {
     startBackgroundThread();
 }
@@ -223,23 +207,8 @@ void TimingCamera::changeImage(int index) {
 }
 
 void TimingCamera::addNewImage(QString fileName) {
-    // Run the OCR
-    cv::Mat image = cv::imread(fileName.toLatin1().constData(), 1);
-    int bibNumber = 0;
-    if (image.empty()) {
-        qDebug("ERROR:Failed to open image file %s", fileName.toLatin1().constData());
-    } else {
-        pipeline::Pipeline pipeline;
-        std::vector<int> bibNumbers;
-        pipeline.processImage(image, svmModel, darkOnLight, bibNumbers);
-        if(!bibNumbers.empty()) {
-            qDebug("%d", bibNumbers.at(0));
-            bibNumber = bibNumbers.at(0);
-        }
-    }
-
     // Add the new image to the list of paths
-    entries.append(Entry(fileName, bibNumber));
+    entries.append(Entry(fileName, 0));
 
     emit newImage();
 }
