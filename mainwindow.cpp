@@ -191,7 +191,7 @@ void MainWindow::newTimingPoint() {
         TimingPoint *tPoint = new TimingPoint(directory,pointName->text(),
                                               mainIp->text(), secondIp->text(),
                                               numViews->text().toInt(), channelNumber->text().toInt(), this);
-        connect(tPoint, SIGNAL(newEntry(int,QString,QString)), this, SLOT(sendData(int,QString,QString)));
+        connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
         layout->addWidget(tPoint);
     }
 }
