@@ -5,8 +5,10 @@
 #include <tesseract/genericvector.h>
 
 #include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
 #include <opencv2/ml/ml.hpp>
+#include <opencv2/core/version.hpp>
 
 #include "train.h"
 
@@ -193,8 +195,13 @@ int TextRecognizer::recognize(IplImage *input,
 				"Chain #" << i << " Angle: " << theta_deg << " degrees");
 
 		/* create copy of input image including only the selected components */
+#if CV_MAJOR_VERSION == 2
 		cv::Mat inputMat = cv::Mat(input);
 		cv::Mat grayMat = cv::Mat(grayImage);
+#elif CV_MAJOR_VERSION == 3
+		cv::Mat inputMat = cv::cvarrToMat(input);
+		cv::Mat grayMat = cv::cvarrToMat(grayImage);
+#endif
 		cv::Mat componentsImg = cv::Mat::zeros(grayMat.rows, grayMat.cols,
 				grayMat.type());
 
@@ -336,8 +343,11 @@ int TextRecognizer::recognize(IplImage *input,
 					}
 
 					/* if we have an SVM Model, predict */
-
+#if CV_MAJOR_VERSION == 2
 					CvSVM svm;
+#elif CV_MAJOR_VERSION == 3
+					cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
+#endif
 					cv::HOGDescriptor hog(cv::Size(128, 64), /* windows size */
 					cv::Size(16, 16), /* block size */
 					cv::Size(8, 8), /* block stride */
@@ -352,8 +362,13 @@ int TextRecognizer::recognize(IplImage *input,
 					hog.compute(resizedMat, descriptor);
 
 					/* load SVM model */
+#if CV_MAJOR_VERSION == 2
 					svm.load(svmModel.c_str());
 					float prediction = svm.predict(cv::Mat(descriptor).t());
+#else
+					svm->load(svmModel.c_str());
+					float prediction = svm->predict(cv::Mat(descriptor).t());
+#endif
 					LOGL(LOG_SVM, "Prediction=" << prediction);
 					if (prediction < 0.5) {
 						LOGL(LOG_TEXTREC,
@@ -417,8 +432,8 @@ int TextRecognizer::recognize(IplImage *input,
 
 				/* save for training only if orientation is ~horizontal */
 				if (abs(theta_deg) < 7) {
-					char *filename;
-					asprintf(&filename, "bib-%05d-%04d.png", this->bsid++,
+					char *filename = (char *)malloc(18 * sizeof(char *));
+					sprintf(filename, "bib-%05d-%04d.png", this->bsid++,
 							atoi(out));
 					cv::imwrite(filename, bibMat);
 					free(filename);

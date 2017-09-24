@@ -27,15 +27,20 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <opencv/cxcore.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include <opencv/cxcore.h>
+#include <opencv2/core/version.hpp>
 #include <math.h>
 #include <time.h>
 #include <utility>
 #include <algorithm>
 #include <vector>
 #include "textdetection.h"
+
+#if CV_MAJOR_VERSION == 3
+#include <opencv2/imgproc.hpp>
+#endif
 
 #include "log.h"
 
@@ -224,9 +229,13 @@ void renderComponentsWithBoxes(IplImage * SWTImage,
 		else
 			c = cvScalar(0, 0, 255);
 
-		char *txt;
-		asprintf(&txt, "%d", count);
+		char *txt = (char*) malloc(((bb.size() / 10) + 1) * sizeof(char));
+		sprintf(txt, "%d", count);
+#if CV_MAJOR_VERSION == 2
 		cv::Mat tmp_mat = cv::Mat(output);
+#elif CV_MAJOR_VERSION == 3
+		cv::Mat tmp_mat = cv::cvarrToMat(output);
+#endif
 		cv::rectangle(tmp_mat, it->first, it->second, c);
 		cv::putText(tmp_mat, txt, it->first, cv::FONT_HERSHEY_SIMPLEX, 0.3, c);
 		free(txt);
