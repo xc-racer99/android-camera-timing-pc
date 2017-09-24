@@ -15,13 +15,6 @@ find_package(Qt5SerialPort)
 # Add resources
 qt5_add_resources(UI_RESOURCES images.qrc)
 
-# Tell CMake to create the executable
-add_executable(AndroidCameraTiming main.cpp
-	mainwindow.cpp mytcpsocket.cpp
-	summitemulator.cpp
-	timingcamera.cpp timingpoint.cpp
-	${UI_RESOURCES})
-
 # Add the libcrc directory
 include_directories ("${PROJECT_SOURCE_DIR}/3rd-Party/libcrc/include")
 add_subdirectory (3rd-Party/libcrc)
@@ -29,6 +22,13 @@ add_subdirectory (3rd-Party/libcrc)
 # Add bibnumber
 include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
 add_subdirectory(3rd-Party/bibnumber)
+
+# Tell CMake to create the executable
+add_executable(AndroidCameraTiming main.cpp
+	mainwindow.cpp mytcpsocket.cpp
+	summitemulator.cpp
+	timingcamera.cpp timingpoint.cpp
+	${UI_RESOURCES})
 
 target_link_libraries (AndroidCameraTiming bibnumber LibCRC)
 
@@ -48,20 +48,26 @@ install(TARGETS AndroidCameraTiming
 	RUNTIME
 	DESTINATION .)
 
-if(WIN32)
+if(MINGW)
 	# package the needed libraries, superbuild installs them into ${PROJECT_BINARY_DIR}
 	file(GLOB DLLs ${PROJECT_BINARY_DIR}/../install/ProgramFiles/bin/*.dll)
 	install(FILES ${DLLs}
 		DESTINATION .)
+
 	# other qt files
 	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/plugins
 		DESTINATION .)
+
 	# qt.conf so it finds the plugins
 	install(FILES qt.conf
 		DESTINATION .)
-	# libstdc++ library - Fix-ME - this should probably not be hard-coded...
+
+	# gcc libraries - Fix-ME - these should probably not be hard-coded...
 	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libstdc++-6.dll
 		DESTINATION .)
+	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libgcc_s_sjlj-1.dll
+		DESTINATION .)
+
 	# NSIS start menu links will point to executables in this directory
 	set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
 	set(CPACK_PACKAGE_EXECUTABLES "AndroidCameraTiming;Camera Timing for Android - PC")
