@@ -46,8 +46,8 @@ target_link_libraries(bibnumber
 #)
 
 install(TARGETS bibnumber
-	ARCHIVE
-	DESTINATION .)
+	RUNTIME DESTINATION .
+	ARCHIVE DESTINATION .)
 
 #install(TARGETS bibnumber-cmd-line
 #	RUNTIME
