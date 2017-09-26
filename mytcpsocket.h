@@ -20,10 +20,13 @@ signals:
     void serverStatus(QString status);
 public slots:
     void process();
+    void setAtBack(bool atBack);
 private:
     QTcpSocket *socket;
     QString hostName;
     QString directory;
+
+    bool fromBehind;
 
     long bytesToLong(QByteArray b);
 };

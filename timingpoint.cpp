@@ -133,11 +133,11 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     // Connections to Camera
     connect(this, SIGNAL(changeImage(int)), mainCamera, SLOT(changeImage(int)));
     connect(mainCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
-    connect(mainCamera, SIGNAL(ipAddressChanged(QString)), this, SLOT(saveSettings()));
+    connect(mainCamera, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
 
     connect(this, SIGNAL(changeImage(int)), secondCamera, SLOT(changeImage(int)));
     connect(secondCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
-    connect(secondCamera, SIGNAL(ipAddressChanged(QString)), this, SLOT(saveSettings()));
+    connect(secondCamera, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
 
     // Save the settings
     saveSettings();

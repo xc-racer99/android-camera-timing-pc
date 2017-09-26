@@ -82,8 +82,10 @@ void MyTcpSocket::process() {
                         svmModel = directory + "../../svm.xml";
                     pipeline.processImage(image, svmModel.toLatin1().constData(), /*darkOnLight*/ 1, bibNumbers);
                     if(!bibNumbers.empty()) {
-                        qDebug("%d", bibNumbers.at(0));
-                        bibNumber = bibNumbers.at(0);
+                        if(fromBehind)
+                            bibNumber = bibNumbers.back();
+                        else
+                            bibNumber = bibNumbers.front();
                     }
                 }
 
@@ -93,6 +95,10 @@ void MyTcpSocket::process() {
     }
     emit serverStatus("Disconnected");
     emit finished();
+}
+
+void MyTcpSocket::setAtBack(bool atBack) {
+    fromBehind = atBack;
 }
 
 long MyTcpSocket::bytesToLong(QByteArray b) {

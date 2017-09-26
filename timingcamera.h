@@ -31,25 +31,26 @@ private:
     QLabel *actualImage;
     QLabel *serverStatus;
     QPushButton *reconnectButton;
-    QPushButton *changeIpButton;
+    QPushButton *changeSettingsButton;
     QPushButton *minusButton;
     QPushButton *plusButton;
     QScrollArea *scrollArea;
     QString directory;
 
+    bool fromBack;
     float scaleFactor;
 
     void adjustScrollBar(QScrollBar *scrollBar, double factor);
     void scaleImage(double factor);
     void startBackgroundThread();
 signals:
-    void ipAddressChanged(QString newIp);
+    void settingsChanged(QString newIp);
     void newImage();
 public slots:
     void changeImage(int index);
 private slots:
     void addNewImage(QString fileName, int bibNumber);
-    void changeIpDialog();
+    void changeSettings();
     void reconnectToServer();
     void setConnectionStatus(QString status);
     void zoomIn();

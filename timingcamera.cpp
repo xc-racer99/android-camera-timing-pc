@@ -16,10 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  **/
 
+#include <QCheckBox>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
+#include <QFormLayout>
 #include <QGridLayout>
 #include <QImageReader>
-#include <QInputDialog>
+#include <QLineEdit>
 #include <QScrollArea>
 #include <QSlider>
 #include <QThread>
@@ -33,6 +37,8 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     directory = dir;
 
     scaleFactor = 1.0;
+
+    fromBack = false;
 
     QDir temp(directory);
     if(!temp.exists())
@@ -60,8 +66,8 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     // Initialize push buttons
     reconnectButton = new QPushButton(statusBox);
     reconnectButton->setText(tr("Reconnect"));
-    changeIpButton = new QPushButton(statusBox);
-    changeIpButton->setText(tr("Change IP"));
+    changeSettingsButton = new QPushButton(statusBox);
+    changeSettingsButton->setText(tr("Settings"));
 
     // Setup a group box which holds everything
     imageHolder = new QWidget();
@@ -101,12 +107,12 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     statusLayout->addWidget(serverStatusLabel, 1, 0, 1, 1);
     statusLayout->addWidget(serverStatus, 1, 1, 1, 1);
     statusLayout->addWidget(reconnectButton, 2, 0, 1, 1);
-    statusLayout->addWidget(changeIpButton, 2, 1, 1, 1);
+    statusLayout->addWidget(changeSettingsButton, 2, 1, 1, 1);
     statusBox->setLayout(statusLayout);
 
     // Button connections
     connect(reconnectButton, SIGNAL(clicked(bool)), this, SLOT(reconnectToServer()));
-    connect(changeIpButton, SIGNAL(clicked(bool)), this, SLOT(changeIpDialog()));
+    connect(changeSettingsButton, SIGNAL(clicked(bool)), this, SLOT(changeSettings()));
     connect(minusButton, SIGNAL(clicked(bool)), this, SLOT(zoomOut()));
     connect(plusButton, SIGNAL(clicked(bool)), this, SLOT(zoomIn()));
 
@@ -130,15 +136,36 @@ void TimingCamera::reconnectToServer() {
     startBackgroundThread();
 }
 
-void TimingCamera::changeIpDialog() {
-    bool ok;
-    QString newIp = QInputDialog::getText(statusBox, tr("Enter new IP"), tr("IP:"), QLineEdit::Normal, ipAddress->text(), &ok);
+void TimingCamera::changeSettings() {
+    QDialog *dialog = new QDialog();
+    QFormLayout *layout = new QFormLayout(dialog);
 
-    // Update the ip address shown
-    if(ok && !newIp.isEmpty()) {
-        ipAddress->setText(newIp);
+    QLabel *ipAddressLabel = new QLabel(dialog);
+    ipAddressLabel->setText(tr("IP Address:"));
+    QLineEdit *ipAddressEdit = new QLineEdit(dialog);
+    ipAddressEdit->setText(ipAddress->text());
+    layout->addRow(ipAddressLabel, ipAddressEdit);
 
-        emit ipAddressChanged(newIp);
+    QCheckBox *atBack = new QCheckBox(dialog);
+    atBack->setText(tr("From Behind?"));
+    atBack->setChecked(fromBack);
+    layout->addRow(atBack);
+
+    // Buttons
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               Qt::Horizontal, dialog);
+    layout->addRow(&buttonBox);
+
+    dialog->setLayout(layout);
+
+    // Make connections
+    connect(&buttonBox, SIGNAL(accepted()), dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), dialog, SLOT(reject()));
+
+    if(dialog->exec() == QDialog::Accepted) {
+        fromBack = atBack->checkState();
+        ipAddress->setText(ipAddressEdit->text());
+        emit settingsChanged(ipAddressEdit->text());
     }
 }
 
@@ -146,10 +173,10 @@ void TimingCamera::setConnectionStatus(QString status) {
     // Re-enable buttons if the status is disconnected
     if(status == "Disconnected") {
         reconnectButton->setEnabled(true);
-        changeIpButton->setEnabled(true);
+        changeSettingsButton->setEnabled(true);
     } else {
         reconnectButton->setEnabled(false);
-        changeIpButton->setEnabled(false);
+        changeSettingsButton->setEnabled(false);
     }
     serverStatus->setText(status);
 }
@@ -158,6 +185,7 @@ void TimingCamera::startBackgroundThread() {
     // Start the separate thread and move the socket to it
     QThread *networkThread = new QThread();
     MyTcpSocket *socket = new MyTcpSocket(ipAddress->text(), directory);
+    socket->setAtBack(fromBack);
 
     socket->moveToThread(networkThread);
 
