@@ -232,7 +232,7 @@ int process(std::string inputName, std::string svmModel) {
 				<< outPath.string() << std::endl;
 
 		std::ofstream outFile;
-		outFile.open(outPath.c_str());
+		outFile.open((const char*)outPath.c_str());
 
 		/* set log mask to minimum */
 		biblog::set_log_mask(LOG_NONE);
