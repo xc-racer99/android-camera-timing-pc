@@ -397,8 +397,8 @@ int process(std::string trainDir, std::string inputDir) {
 		float prediction = svm.predict(cv::Mat(descriptor).t());
 		std::cout << i << " prediction=" << prediction << std::endl;
 		if (prediction > 0.5) {
-			char *filename;
-			asprintf(&filename, "positive-%d.png", i);
+			char filename[end/10 + 1 + 14];
+            sprintf(filename, "positive-%d.png", i);
 			cv::imwrite(filename, imageMat(roi));
 			free(filename);
 		}
