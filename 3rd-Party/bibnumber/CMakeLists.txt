@@ -35,21 +35,24 @@ target_link_libraries(bibnumber
 	opencv_ml
 )
 
-#add_executable(bibnumber-cmd-line
-#	bibnumber.cpp
-#	batch.cpp
-#	train.cpp
-#)
-
-#target_link_libraries(bibnumber-cmd-line
-#	bibnumber
-#)
-
 install(TARGETS bibnumber
 	RUNTIME DESTINATION .
 	ARCHIVE DESTINATION .
 	LIBRARY DESTINATION .)
 
-#install(TARGETS bibnumber-cmd-line
-#	RUNTIME
-#	DESTINATION .)
+# This only builds with OpenCV 2
+if("${OpenCV_VERSION_MAJOR}" STREQUAL "2")
+add_executable(bibnumber-cmd-line
+	bibnumber.cpp
+	batch.cpp
+	train.cpp
+)
+
+target_link_libraries(bibnumber-cmd-line
+	bibnumber
+)
+
+install(TARGETS bibnumber-cmd-line
+	RUNTIME
+	DESTINATION .)
+endif()
