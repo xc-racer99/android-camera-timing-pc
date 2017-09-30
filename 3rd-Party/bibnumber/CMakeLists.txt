@@ -1,6 +1,7 @@
 # Different libs required for OpenCV 2 and OpenCV 3
 find_package(OpenCV REQUIRED core imgproc highgui objdetect ml)
-if("${OPENCV_VERSION}" STREQUAL "3")
+
+if("${OpenCV_VERSION_MAJOR}" STREQUAL "3")
 	find_package(OpenCV REQUIRED core imgproc highgui objdetect ml imgcodecs)
 endif()
 
