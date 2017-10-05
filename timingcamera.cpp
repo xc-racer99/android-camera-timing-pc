@@ -118,9 +118,13 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     // Create a list of images already present
     QStringList filter("*.jpg");
-    QFileInfoList initialFileInfo = temp.entryInfoList(filter, QDir::Files, QDir::Name);
+#ifdef _WIN32
+    QStringList initialFileInfo = temp.entryList(filter, QDir::Files, QDir::Name|QDir::Reversed);
+#else
+    QStringList initialFileInfo = temp.entryList(filter, QDir::Files, QDir::Name);
+#endif
     for(int i = 0; i < initialFileInfo.length(); i++)
-        entries.append(Entry(initialFileInfo.at(i).absoluteFilePath(), 0));
+        entries.append(Entry(temp.absoluteFilePath(".") + "/" + initialFileInfo.at(i), 0));
 
     // Start the image saving thread
     startBackgroundThread();
