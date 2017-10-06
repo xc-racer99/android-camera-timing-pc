@@ -100,8 +100,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     layout = new QVBoxLayout(container);
     setCentralWidget(scrollArea);
 
-    // Check and see if we're opening a folder that's already been in use
     QDir dir(directory);
+
+    // Create a folder for temporary images
+    if(!dir.exists("tempImages"))
+        dir.mkpath("tempImages");
+
+    // Check and see if we're opening a folder that's already been in use
     QStringList filter("*");
     QFileInfoList subDirs = dir.entryInfoList(filter, QDir::Dirs);
     // Loop through the subdirectories, adding a new timing point for each one that has a .settings file

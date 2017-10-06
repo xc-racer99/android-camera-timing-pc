@@ -316,10 +316,15 @@ namespace textdetection {
 
 TextDetector::TextDetector()
 {
+	directory = "";
 }
 
 TextDetector::~TextDetector(void)
 {
+}
+
+void TextDetector::setOutputDirectory(std::string dir) {
+	directory = dir;
 }
 
 void TextDetector::detect(IplImage * input,
@@ -337,7 +342,7 @@ void TextDetector::detect(IplImage * input,
 	double threshold_high = 320;
 	IplImage * edgeImage = cvCreateImage(cvGetSize(input), IPL_DEPTH_8U, 1);
 	cvCanny(grayImage, edgeImage, threshold_low, threshold_high, 3);
-	cvSaveImage("canny.png", edgeImage);
+	cvSaveImage((directory + "canny.png").c_str(), edgeImage);
 
 	// Create gradient X, gradient Y
 	IplImage * gaussianImage = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F,
@@ -363,16 +368,16 @@ void TextDetector::detect(IplImage * input,
 	}
 	strokeWidthTransform(edgeImage, gradientX, gradientY, params, SWTImage,
 			rays);
-	cvSaveImage("SWT_0.png", SWTImage);
+	cvSaveImage((directory + "SWT_0.png").c_str(), SWTImage);
 	SWTMedianFilter(SWTImage, rays);
-	cvSaveImage("SWT_1.png", SWTImage);
+	cvSaveImage((directory + "SWT_1.png").c_str(), SWTImage);
 
 	IplImage * output2 = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F, 1);
 	normalizeImage(SWTImage, output2);
-	cvSaveImage("SWT_2.png", output2);
+	cvSaveImage((directory + "SWT_2.png").c_str(), output2);
 	IplImage * saveSWT = cvCreateImage(cvGetSize(input), IPL_DEPTH_8U, 1);
 	cvConvertScale(output2, saveSWT, 255, 0);
-	cvSaveImage("SWT.png", saveSWT);
+	cvSaveImage((directory + "SWT.png").c_str(), saveSWT);
 	cvReleaseImage(&output2);
 	cvReleaseImage(&saveSWT);
 
@@ -392,7 +397,7 @@ void TextDetector::detect(IplImage * input,
 
 	IplImage * output3 = cvCreateImage(cvGetSize(input), 8U, 3);
 	renderComponentsWithBoxes(SWTImage, validComponents, compBB, output3);
-	cvSaveImage("components.png", output3);
+	cvSaveImage((directory + "components.png").c_str(), output3);
 	cvReleaseImage ( &output3 );
 
 	// Make chains of components
@@ -401,7 +406,7 @@ void TextDetector::detect(IplImage * input,
 
 	IplImage * output = cvCreateImage(cvGetSize(grayImage), IPL_DEPTH_8U, 3);
 	renderChainsWithBoxes(SWTImage, validComponents, chains, compBB, chainBB, output);
-	cvSaveImage("text-boxes.png", output);
+	cvSaveImage((directory + "text-boxes.png").c_str(), output);
 
 
 

@@ -75,6 +75,7 @@ void MyTcpSocket::process() {
                     qDebug("ERROR:Failed to open image file %s", file.fileName().toLatin1().constData());
                 } else {
                     pipeline::Pipeline pipeline;
+                    pipeline.setDirectory((directory + "../../tempImages/").toLatin1().constData());
                     std::vector<int> bibNumbers;
                     QString svmModel = "";
                     QFile svmFile(directory + "../../svm.xml");

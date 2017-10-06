@@ -131,11 +131,17 @@ TextRecognizer::TextRecognizer() {
 	/* initialize sequence ids */
 	bsid = 0;
 	dsid = 0;
+
+	directory = "";
 }
 
 TextRecognizer::~TextRecognizer(void) {
 	tess.Clear();
 	tess.End();
+}
+
+void TextRecognizer::setOutputDirectory(std::string dir) {
+	directory = dir;
 }
 
 int TextRecognizer::recognize(IplImage *input,
@@ -240,20 +246,20 @@ int TextRecognizer::recognize(IplImage *input,
 			std::cout << "mu02=" << mu.mu02 << " mu11=" << mu.mu11 << " skew="
 			<< mu.mu11 / mu.mu02 << std::endl;
 #endif
-			cv::imwrite("thresholded.png", thresholded);
+			cv::imwrite(directory + "thresholded.png", thresholded);
 
 			cv::threshold(componentRoi, componentsImg(roi), 0 // the value doesn't matter for Otsu thresholding
 					, 255 // we could choose any non-zero value. 255 (white) makes it easy to see the binary image
 					, cv::THRESH_OTSU | cv::THRESH_BINARY_INV);
 		}
-		cv::imwrite("bib-components.png", componentsImg);
+		cv::imwrite(directory + "bib-components.png", componentsImg);
 
 		cv::Mat rotMatrix = cv::getRotationMatrix2D(center, theta_deg, 1.0);
 
 		cv::Mat rotatedMat = cv::Mat::zeros(grayMat.rows, grayMat.cols,
 				grayMat.type());
 		cv::warpAffine(componentsImg, rotatedMat, rotMatrix, rotatedMat.size());
-		cv::imwrite("bib-rotated.png", rotatedMat);
+		cv::imwrite(directory + "bib-rotated.png", rotatedMat);
 
 		/* rotate each component coordinates */
 		const int border = 3;
@@ -285,7 +291,7 @@ int TextRecognizer::recognize(IplImage *input,
 		cv::Mat elem = cv::getStructuringElement(cv::MORPH_ELLIPSE,
 				cv::Size(2 * s + 1, 2 * s + 1), cv::Point(s, s));
 		cv::erode(mat, mat, elem);
-		cv::imwrite("bib-tess-input.png", mat);
+		cv::imwrite(directory + "bib-tess-input.png", mat);
 
 		// Pass it to Tesseract API
 		tess.SetImage((uchar*) mat.data, mat.cols, mat.rows, 1, mat.step1());
@@ -412,7 +418,7 @@ int TextRecognizer::recognize(IplImage *input,
 							if (dist < min) {
 								min = dist;
 								minOffset = offset;
-								cv::imwrite("symm-max.png", straightMat);
+								cv::imwrite(directory + "symm-max.png", straightMat);
 								cv::Mat visualImage;
 							}
 						}
@@ -435,7 +441,7 @@ int TextRecognizer::recognize(IplImage *input,
 					char *filename = (char *)malloc(18 * sizeof(char *));
 					sprintf(filename, "bib-%05d-%04d.png", this->bsid++,
 							atoi(out));
-					cv::imwrite(filename, bibMat);
+					cv::imwrite(directory + filename, bibMat);
 					free(filename);
 				}
 
