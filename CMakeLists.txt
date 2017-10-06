@@ -62,6 +62,10 @@ if(MINGW)
 	install(FILES qt.conf
 		DESTINATION .)
 
+	# install tessdata directory
+	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/tessdata
+		DESTINATION .)
+
 	# gcc libraries - Fix-ME - these should probably not be hard-coded...
 	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libstdc++-6.dll
 		DESTINATION .)
