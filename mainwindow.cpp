@@ -187,9 +187,9 @@ void MainWindow::newTimingPoint() {
     connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
 
     if (dialog.exec() == QDialog::Accepted) {
-        if(pointName->text().isEmpty() || mainIp->text().isEmpty() || numViews->text().isEmpty()) {
+        if(pointName->text().isEmpty() || numViews->text().isEmpty()) {
             QMessageBox msgBox;
-            msgBox.setText(tr("You must specify a point name, an IP, and the max views"));
+            msgBox.setText(tr("You must specify a point name and the max views"));
             msgBox.exec();
             return;
         }
