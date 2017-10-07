@@ -28,7 +28,7 @@ private:
 
     bool fromBehind;
 
-    long bytesToLong(QByteArray b);
+    qint64 bytesToLong(QByteArray b);
 };
 
 #endif // MYTCPSOCKET_H

@@ -45,14 +45,14 @@ void MyTcpSocket::process() {
     while(socket->isOpen() && socket->waitForReadyRead(-1) && socket->bytesAvailable()) {
         // Read the first 64 bits - timestamp
         QByteArray timeStampBytes = socket->read(8);
-        long timestamp = bytesToLong(timeStampBytes);
-        qDebug("reading timestamp %ld", timestamp);
+        qint64 timestamp = bytesToLong(timeStampBytes);
+        qDebug("reading timestamp %lld", timestamp);
 
         // Read the next 64 bits - the size of the image
         if(socket->waitForReadyRead()) {
             QByteArray imageSizeBytes = socket->read(8);
-            long imageSize = bytesToLong(imageSizeBytes);
-            qDebug("file size is %ld", imageSize);
+            qint64 imageSize = bytesToLong(imageSizeBytes);
+            qDebug("file size is %lld", imageSize);
 
             if(socket->waitForReadyRead(-1)) {
                 // Actually read the image and save to a file
@@ -102,8 +102,8 @@ void MyTcpSocket::setAtBack(bool atBack) {
     fromBehind = atBack;
 }
 
-long MyTcpSocket::bytesToLong(QByteArray b) {
-    long result = 0;
+qint64 MyTcpSocket::bytesToLong(QByteArray b) {
+    qint64 result = 0;
     for (int i = 0; i < 8; i++) {
         result <<= 8;
         result |= (b.at(i) & 0xFF);
