@@ -168,6 +168,7 @@ void MainWindow::newTimingPoint() {
     // # of times we can see the same bib
     QLineEdit *numViews = new QLineEdit(&dialog);
     QLabel numViewsLabel(tr("Max times through this point:"));
+    numViews->setText("1");
     formLayout.addRow(&numViewsLabel, numViews);
 
     // Summit channel number
