@@ -16,6 +16,8 @@ public:
     explicit TimingCamera(QString dir, QString ip, QObject *parent = 0);
     ~TimingCamera();
 
+    void setAtBack(bool fromBehind);
+
     struct Entry {
         QString file;
         int bibNumber;
@@ -43,6 +45,7 @@ private:
     void adjustScrollBar(QScrollBar *scrollBar, double factor);
     void scaleImage(double factor);
     void startBackgroundThread();
+
 signals:
     void settingsChanged(QString newIp);
     void newImage();

@@ -23,6 +23,7 @@
 #include <QFileDialog>
 #include <QGridLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QImage>
 #include <QInputDialog>
 #include <QIcon>
@@ -35,11 +36,12 @@
 #include <QThread>
 #include <QTimer>
 #include <QTextStream>
+#include <QVBoxLayout>
 
 #include "timingcamera.h"
 #include "timingpoint.h"
 
-TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, int channelNum, QWidget *parent) : QGroupBox(parent)
+TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> cameras, int maxNum, int channelNum, QWidget *parent) : QGroupBox(parent)
 {
     channel = channelNum;
 
@@ -53,9 +55,13 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
         dir->mkpath(subDirectory);
     delete dir;
 
-    // Create our camera devices
-    mainCamera = new TimingCamera(subDirectory + "Main/", ip, this);
-    secondCamera = new TimingCamera(subDirectory + "Secondary/", secondIp, this);
+    for(int i = 0; i < cameras.length(); i++) {
+        timingCameras.append(new TimingCamera(subDirectory + cameras.at(i).name, cameras.at(i).ip));
+        if(cameras.at(i).atBack) {
+            TimingCamera *temp = timingCameras.last();
+            temp->setAtBack(true);
+        }
+    }
 
     // Create our info labels
     QLabel *timestampLabel = new QLabel(this);
@@ -101,11 +107,23 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     gridLayout->addWidget(imageSlider, 6, 1, 1, 2);
     gridLayout->addWidget(timestamp, 0, 6, 1, 1);
     gridLayout->addWidget(minusButton, 6, 0, 1, 1);
-    gridLayout->addWidget(mainCamera->imageHolder, 0, 0, 6, 2);
-    gridLayout->addWidget(mainCamera->statusBox, 4, 5, 1, 2);
 
-    gridLayout->addWidget(secondCamera->imageHolder, 0, 2, 6, 2);
-    gridLayout->addWidget(secondCamera->statusBox, 5, 5, 2, 2);
+    // Layouts of images and status boxes
+    QWidget *imageHolderWidget = new QWidget(this);
+    QWidget *statusBoxWidget = new QWidget(this);
+    QHBoxLayout *imageHolderLayout = new QHBoxLayout(imageHolderWidget);
+    QVBoxLayout *statusBoxLayout = new QVBoxLayout(statusBoxWidget);
+    gridLayout->addWidget(imageHolderWidget, 0, 0, 6, 4);
+    gridLayout->addWidget(statusBoxWidget, 4, 5, 2, 4);
+
+    for(int i = 0; i < timingCameras.length(); i++) {
+        TimingCamera *temp = timingCameras.at(i);
+        imageHolderLayout->addWidget(temp->imageHolder);
+        statusBoxLayout->addWidget(temp->statusBox);
+    }
+
+    imageHolderWidget->setLayout(imageHolderLayout);
+    statusBoxWidget->setLayout(statusBoxLayout);
 
     // Set stretch for the parts of the image
     gridLayout->setColumnStretch(1, 5);
@@ -130,14 +148,13 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     // Slider connection
     connect(imageSlider, SIGNAL(valueChanged(int)), this, SLOT(updateImageInfo(int)));
 
-    // Connections to Camera
-    connect(this, SIGNAL(changeImage(int)), mainCamera, SLOT(changeImage(int)));
-    connect(mainCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
-    connect(mainCamera, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
-
-    connect(this, SIGNAL(changeImage(int)), secondCamera, SLOT(changeImage(int)));
-    connect(secondCamera, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
-    connect(secondCamera, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
+    // Connections to Cameras
+    for(int i = 0; i < timingCameras.length(); i++) {
+        TimingCamera *temp = timingCameras.at(i);
+        connect(this, SIGNAL(changeImage(int)), temp, SLOT(changeImage(int));
+        connect(temp, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
+        connect(temp, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
+    }
 
     // Save the settings
     saveSettings();
@@ -146,10 +163,13 @@ TimingPoint::TimingPoint(QString directory, QString name, QString ip, QString se
     imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
 
     // Set the initial image if we already have images
-    if(mainCamera->entries.length() > 1) {
-        // Set the image slider length to the number of images we have
-        imageSlider->setMaximum(mainCamera->entries.length() - 1);
-        imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
+    if(timingCameras.length() > 0) {
+        TimingCamera *firstCamera = timingCameras.at(0);
+        if(firstCamera->entries.length() > 1) {
+            // Set the image slider length to the number of images we have
+            imageSlider->setMaximum(firstCamera->entries.length() - 1);
+            imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
+        }
     }
 
     // Create the csv file that we read from and write to
@@ -269,44 +289,58 @@ void TimingPoint::updateImageInfo(int index) {
     // Emit the signal to the cameras to change their image
     emit changeImage(index);
 
-    // Update the timestamp
-    QFileInfo pic = mainCamera->entries.at(index).file;
-    QString rawTimestamp = pic.baseName();
-
-    //Convert the raw timestamp to user-readable string
-    bool ok;
-    QDateTime time;
-    qint64 temp = rawTimestamp.toLongLong(&ok);
-    if(ok) {
-        time = QDateTime::fromMSecsSinceEpoch(temp);
-        timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
-        // Enable the next button
-        nextButton->setEnabled(true);
-    } else {
-        // Presumably there was no image at the main camera, so try getting the timestamp from the second image
-        pic = secondCamera->entries.at(index).file;
-        rawTimestamp = pic.baseName();
-        temp = rawTimestamp.toLongLong(&ok);
+    bool timestampFound = false;
+    int i = 0;
+    int numCameras = timingCameras.length();
+    while(!timestampFound && i < numCameras) {
+        // Try updating the timestamp
+        TimingCamera *tempCamera = timingCameras.at(i);
+        QString filename = tempCamera->entries.at(index).file;
+        QString rawTimestamp = filename.section("/", -1);
+        rawTimestamp.chop(4);
+        //Convert the raw timestamp to user-readable string
+        bool ok;
+        QDateTime time;
+        qint64 temp = rawTimestamp.toLongLong(&ok);
         if(ok) {
             time = QDateTime::fromMSecsSinceEpoch(temp);
             timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
             // Enable the next button
             nextButton->setEnabled(true);
+            timestampFound = true;
+            break;
         } else {
-            timestamp->setText("");
-            // Disable the next button
-            nextButton->setEnabled(false);
+            i++;
         }
     }
 
+    if(!timestampFound) {
+        timestamp->setText("");
+        nextButton->setEnabled(false);
+    }
+
     // If we've already written a bib number, show it in the Line Edit
-    bibNumEdit->setText(hash[roundTime(time.time(), 0)]);
+    bibNumEdit->setText(hash[timestamp->text()]);
 
     // If we didn't find a number, check if we received one from the camera
-    if(bibNumEdit->text().isEmpty()) {
-        int number = mainCamera->entries.at(index).bibNumber;
-        if(number != 0 && number == secondCamera->entries.at(index).bibNumber) {
-            bibNumEdit->setText(QString("%1").arg(number));
+    if(bibNumEdit->text().isEmpty() && timingCameras.length() > 0) {
+        bool allMatch = true;
+        TimingCamera *temp = timingCameras.at(0);
+        int firstBibNumber = temp->entries.at(index).bibNumber;
+        i = 1;
+        while(allMatch && i < numCameras) {
+            temp = timingCameras.at(i);
+            int number = temp->entries.at(index).bibNumber;
+            if(number == 0 || number != firstBibNumber) {
+                // Mismatch
+                allMatch = false;
+            } else {
+                i++;
+            }
+        }
+
+        if(allMatch) {
+            bibNumEdit->setText(QString("%1").arg(firstBibNumber));
             submitButtonPushed();
         }
     }
@@ -328,6 +362,7 @@ QString TimingPoint::roundTime(QTime time, int nth) {
 
 void TimingPoint::saveSettings() {
     // Save the IPs to a file
+    /*
     QFile settingsFile(subDirectory + ".settings");
     settingsFile.open(QIODevice::WriteOnly);
     QTextStream out(&settingsFile);
@@ -335,17 +370,33 @@ void TimingPoint::saveSettings() {
         + "\n" + maxViews + "\n" + channel;
     settingsFile.flush();
     settingsFile.close();
+    */
+    //FIXME - implement this for n number of cameras
 }
 
 void TimingPoint::incrementSliderMax() {
-    int mainImages = mainCamera->entries.length();
-    int secondImages = secondCamera->entries.length();
-    sliderMax = qMax(mainImages, secondImages) - 1;
-    if(mainImages != secondImages) {
-        // Delay 1/2 a second to hopefully get things in sync before incrementing the slider
-        QTimer::singleShot(750, this, SLOT(doIncrementSliderMax()));
-    } else {
+    int numCameras = timingCameras.length();
+    if(numCameras == 0) {
+        sliderMax = 0;
         doIncrementSliderMax();
+    } else {
+        bool allMatch = true;
+        TimingCamera *temp = timingCameras.at(0);
+        sliderMax = temp->entries.length();
+        for(int i = 1; i < numCameras; i++) {
+            temp = timingCameras.at(i);
+            int length = temp->entries.length();
+            if(length > sliderMax)
+                sliderMax = length;
+            else if(length != sliderMax)
+                allMatch = false;
+        }
+        if(!allMatch) {
+            // Delay 1/2 a second to hopefully get things in sync before incrementing the slider
+            QTimer::singleShot(750, this, SLOT(doIncrementSliderMax()));
+        } else {
+            doIncrementSliderMax();
+        }
     }
 }
 

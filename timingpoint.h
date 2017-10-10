@@ -7,6 +7,7 @@
 #include <QHash>
 #include <QLabel>
 #include <QLineEdit>
+#include <QList>
 #include <QSlider>
 #include <QWidget>
 
@@ -16,15 +17,23 @@ class TimingPoint : public QGroupBox
 {
     Q_OBJECT
 public:
-    explicit TimingPoint(QString directory, QString name, QString ip, QString secondIp, int maxNum, int channelNum, QWidget *parent = 0);
+    struct CameraInfo {
+        QString name;
+        QString ip;
+        bool atBack;
+
+        CameraInfo(QString cameraName, QString ipAddress, bool atBackArg) : name(cameraName), ip(ipAddress), atBack(atBackArg) {}
+    };
+
+    explicit TimingPoint(QString directory, QString name, QList<CameraInfo> cameras, int maxNum, int channelNum, QWidget *parent = 0);
     ~TimingPoint();
+
 private:
     void startBackgroundThread(QString ip, QString name);
     QString roundTime(QTime time, int nth);
 
     // Common properties
-    TimingCamera *mainCamera;
-    TimingCamera *secondCamera;
+    QList<TimingCamera*> timingCameras;
     QFile *csvFile;
     QLabel *timestamp;
     QLineEdit *bibNumEdit;

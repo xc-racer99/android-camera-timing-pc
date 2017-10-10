@@ -25,6 +25,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QList>
 #include <QMessageBox>
 #include <QScrollArea>
 #include <QTextStream>
@@ -106,6 +107,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     if(!dir.exists("tempImages"))
         dir.mkpath("tempImages");
 
+#if 0
     // Check and see if we're opening a folder that's already been in use
     QStringList filter("*");
     QFileInfoList subDirs = dir.entryInfoList(filter, QDir::Dirs);
@@ -139,6 +141,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         }
         settingsFile.close();
     }
+#endif
 }
 
 void MainWindow::quit() {
@@ -194,8 +197,11 @@ void MainWindow::newTimingPoint() {
             return;
         }
 
+        QList<TimingPoint::CameraInfo> cameraInfo;
+        cameraInfo.append(TimingPoint::CameraInfo("Main", mainIp->text(), false));
+        cameraInfo.append(TimingPoint::CameraInfo("Secondary", secondIp->text(), false));
         TimingPoint *tPoint = new TimingPoint(directory,pointName->text(),
-                                              mainIp->text(), secondIp->text(),
+                                              cameraInfo,
                                               numViews->text().toInt(), channelNumber->text().toInt(), this);
         connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
         layout->addWidget(tPoint);

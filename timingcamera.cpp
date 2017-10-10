@@ -133,6 +133,10 @@ TimingCamera::~TimingCamera() {
     delete imageHolder;
 }
 
+void TimingCamera::setAtBack(bool fromBehind) {
+    fromBack = fromBehind;
+}
+
 void TimingCamera::reconnectToServer() {
     bool ok;
     QString temp = QInputDialog::getText(0, tr("Choose IP and Connect"), tr("IP Address:"), QLineEdit::Normal, ipAddress->text(), &ok);
@@ -164,7 +168,7 @@ void TimingCamera::changeSettings() {
     connect(&buttonBox, SIGNAL(rejected()), dialog, SLOT(reject()));
 
     if(dialog->exec() == QDialog::Accepted) {
-        fromBack = atBack->checkState();
+        setAtBack(atBack->checkState());
     }
 }
 
