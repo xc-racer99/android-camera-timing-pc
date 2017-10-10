@@ -23,6 +23,7 @@
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QImageReader>
+#include <QInputDialog>
 #include <QLineEdit>
 #include <QScrollArea>
 #include <QSlider>
@@ -65,7 +66,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     // Initialize push buttons
     reconnectButton = new QPushButton(statusBox);
-    reconnectButton->setText(tr("Reconnect"));
+    reconnectButton->setText(tr("Connect"));
     changeSettingsButton = new QPushButton(statusBox);
     changeSettingsButton->setText(tr("Settings"));
 
@@ -133,18 +134,18 @@ TimingCamera::~TimingCamera() {
 }
 
 void TimingCamera::reconnectToServer() {
-    startBackgroundThread();
+    bool ok;
+    QString temp = QInputDialog::getText(0, tr("Choose IP and Connect"), tr("IP Address:"), QLineEdit::Normal, ipAddress->text(), &ok);
+    if(ok && !temp.isEmpty()) {
+        ipAddress->setText(temp);
+        emit settingsChanged(temp);
+        startBackgroundThread();
+    }
 }
 
 void TimingCamera::changeSettings() {
     QDialog *dialog = new QDialog();
     QFormLayout *layout = new QFormLayout(dialog);
-
-    QLabel *ipAddressLabel = new QLabel(dialog);
-    ipAddressLabel->setText(tr("IP Address:"));
-    QLineEdit *ipAddressEdit = new QLineEdit(dialog);
-    ipAddressEdit->setText(ipAddress->text());
-    layout->addRow(ipAddressLabel, ipAddressEdit);
 
     QCheckBox *atBack = new QCheckBox(dialog);
     atBack->setText(tr("From Behind?"));
@@ -164,8 +165,6 @@ void TimingCamera::changeSettings() {
 
     if(dialog->exec() == QDialog::Accepted) {
         fromBack = atBack->checkState();
-        ipAddress->setText(ipAddressEdit->text());
-        emit settingsChanged(ipAddressEdit->text());
     }
 }
 
@@ -173,10 +172,8 @@ void TimingCamera::setConnectionStatus(QString status) {
     // Re-enable buttons if the status is disconnected
     if(status == "Disconnected") {
         reconnectButton->setEnabled(true);
-        changeSettingsButton->setEnabled(true);
     } else {
         reconnectButton->setEnabled(false);
-        changeSettingsButton->setEnabled(false);
     }
     serverStatus->setText(status);
 }
