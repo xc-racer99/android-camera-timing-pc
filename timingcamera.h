@@ -17,12 +17,14 @@ public:
     ~TimingCamera();
 
     void setAtBack(bool fromBehind);
+    void addBlankImage(qint64 time);
 
     struct Entry {
         QString file;
         int bibNumber;
+        qint64 timestamp;
 
-        Entry(QString fileName, int bibNum) : file(fileName), bibNumber(bibNum) {}
+        Entry(QString fileName, int bibNum, qint64 time) : file(fileName), bibNumber(bibNum), timestamp(time) {}
     };
 
     QGroupBox *statusBox;

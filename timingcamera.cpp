@@ -35,7 +35,7 @@
 
 TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(parent)
 {
-    directory = dir;
+    directory = dir + "/";
 
     scaleFactor = 1.0;
 
@@ -57,7 +57,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     QLabel *ipAddressLabel = new QLabel(statusBox);
     ipAddressLabel->setText(tr("IP:"));
     QLabel *serverStatusLabel = new QLabel(statusBox);
-    serverStatusLabel->setText(tr("Server Status:"));
+    serverStatusLabel->setText(tr("Server:"));
 
     // Initialize the variable labels
     ipAddress = new QLabel(statusBox);
@@ -100,8 +100,8 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     imageHolder->setLayout(layout);
 
-    // Choose our blank image
-    entries.append(Entry(":/images/images/No_image.png", 0));
+    // Add a blank image
+    entries.append(Entry(":/images/images/No_image.png", 0, 0));
 
     statusLayout->addWidget(ipAddressLabel, 0, 0, 1, 1);
     statusLayout->addWidget(ipAddress, 0, 1, 1, 1);
@@ -120,8 +120,11 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     // Create a list of images already present
     QStringList filter("*.jpg");
     QFileInfoList initialFileInfo = temp.entryInfoList(filter, QDir::Files, QDir::Name);
-    for(int i = 0; i < initialFileInfo.length(); i++)
-        entries.append(Entry(initialFileInfo.at(i).absoluteFilePath(), 0));
+    for(int i = 0; i < initialFileInfo.length(); i++) {
+        QString rawTimestamp = initialFileInfo.at(i).baseName();
+        qint64 timestamp = rawTimestamp.toLongLong();
+        entries.append(Entry(initialFileInfo.at(i).absoluteFilePath(), 0, timestamp));
+    }
 
     // Start the image saving thread
     startBackgroundThread();
@@ -131,6 +134,12 @@ TimingCamera::~TimingCamera() {
     delete ipAddress;
     delete statusBox;
     delete imageHolder;
+}
+
+void TimingCamera::addBlankImage(qint64 time) {
+    QString newName = QString("%1/%2.png").arg(directory).arg(time);
+    QFile::copy(":images/images/No_image.png", newName);
+    entries.append(Entry(newName, 0, time));
 }
 
 void TimingCamera::setAtBack(bool fromBehind) {
@@ -203,20 +212,8 @@ void TimingCamera::startBackgroundThread() {
 }
 
 void TimingCamera::changeImage(int index) {
-    // Account for the possibilty that we missed image(s)
-    while(index >= entries.length()) {
-        QString newName = QString("%1/1.png").arg(directory);
-        if(entries.length() > 0) {
-            bool ok;
-            QFileInfo file(entries.at(entries.length() - 1).file);
-            QString temp = file.baseName();
-            int num = temp.toLong(&ok);
-            if(ok)
-                newName = QString("%1/%2.png").arg(directory).arg(num + 1);
-        }
-        QFile::copy(":images/images/No_image.png", newName);
-        entries.append(Entry(newName, 0));
-    }
+    if(index > entries.length() - 1)
+        index = entries.length() - 1;
     QImageReader reader(entries.at(index).file);
     reader.setAutoTransform(true);
 
@@ -238,7 +235,10 @@ void TimingCamera::changeImage(int index) {
 
 void TimingCamera::addNewImage(QString fileName, int bibNumber) {
     // Add the new image to the list of paths
-    entries.append(Entry(fileName, bibNumber));
+    QFileInfo info(fileName);
+    QString rawTimestamp = info.baseName();
+    qint64 timestamp = rawTimestamp.toLongLong();
+    entries.append(Entry(fileName, bibNumber, timestamp));
 
     // Create a delay of 1s to hopefully give time for the other thread(s) to finish if they're still going
     QTimer::singleShot(1000, this, SIGNAL(newImage()));
