@@ -58,12 +58,16 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
         dir->mkpath(subDirectory);
     delete dir;
 
+    // Store the highest number of exisiting images for the slider
+    int maxNumberOfImages = 0;
+
     for(int i = 0; i < cameras.length(); i++) {
         timingCameras.append(new TimingCamera(subDirectory + cameras.at(i).name, cameras.at(i).ip));
-        if(cameras.at(i).atBack) {
-            TimingCamera *temp = timingCameras.last();
-            temp->setAtBack(true);
-        }
+        TimingCamera *temp = timingCameras.last();
+        temp->setAtBack(cameras.at(i).atBack);
+        int numImages = temp->entries.length();
+        if(numImages > maxNumberOfImages)
+            maxNumberOfImages = numImages;
     }
 
     // Create our info labels
@@ -85,7 +89,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     // Slider to switch among images
     imageSlider = new QSlider(this);
     imageSlider->setMinimum(0);
-    imageSlider->setMaximum(0);
+    imageSlider->setMaximum(maxNumberOfImages - 1);
     imageSlider->setOrientation(Qt::Horizontal);
     imageSlider->setTracking(false);
 
@@ -182,17 +186,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     }
 
     // Trigger change to image
-    imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
-
-    // Set the initial image if we already have images
-    if(timingCameras.length() > 0) {
-        TimingCamera *firstCamera = timingCameras.at(0);
-        if(firstCamera->entries.length() > 1) {
-            // Set the image slider length to the number of images we have
-            imageSlider->setMaximum(firstCamera->entries.length() - 1);
-            imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
-        }
-    }
+    imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
 
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
