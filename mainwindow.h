@@ -2,12 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QBoxLayout>
+#include <QDomDocument>
+#include <QList>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
 #include <QString>
 
 #include "summitemulator.h"
+#include "timingpoint.h"
 
 class MainWindow : public QMainWindow
 {
@@ -19,8 +22,8 @@ private:
     QBoxLayout *layout;
 
     SummitEmulator *summit;
-    int summitDeviceNumber;
     int nextChannelNum;
+    QList<TimingPoint*> tPoints;
 signals:
 
 public slots:
@@ -29,6 +32,7 @@ private slots:
     void getSummitInfo();
     void newTimingPoint();
     void quit();
+    void saveSettings();
 };
 
 #endif // MAINWINDOW_H

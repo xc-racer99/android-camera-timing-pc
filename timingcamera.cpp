@@ -20,6 +20,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QImageReader>
@@ -146,12 +147,25 @@ void TimingCamera::setAtBack(bool fromBehind) {
     fromBack = fromBehind;
 }
 
+bool TimingCamera::getAtBack() {
+    return fromBack;
+}
+
+QString TimingCamera::getIpAddress() {
+    return ipAddress->text();
+}
+
+QString TimingCamera::getName() {
+    QDir info(directory);
+    return info.dirName();
+}
+
 void TimingCamera::reconnectToServer() {
     bool ok;
     QString temp = QInputDialog::getText(0, tr("Choose IP and Connect"), tr("IP Address:"), QLineEdit::Normal, ipAddress->text(), &ok);
     if(ok && !temp.isEmpty()) {
         ipAddress->setText(temp);
-        emit settingsChanged(temp);
+        emit settingsChanged();
         startBackgroundThread();
     }
 }
@@ -179,6 +193,7 @@ void TimingCamera::changeSettings() {
     if(dialog->exec() == QDialog::Accepted) {
         setAtBack(atBack->checkState());
     }
+    emit settingsChanged();
 }
 
 void TimingCamera::setConnectionStatus(QString status) {

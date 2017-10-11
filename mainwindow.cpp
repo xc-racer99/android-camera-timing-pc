@@ -51,9 +51,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Create the summit
     summit = new SummitEmulator;
 
-    // Create a dialog asking about summit emulation
-    getSummitInfo();
-
     // Set the menu bars
     // Initialize variables
     QMenuBar *menubar = new QMenuBar(this);
@@ -107,45 +104,112 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     if(!dir.exists("tempImages"))
         dir.mkpath("tempImages");
 
-#if 0
-    // Check and see if we're opening a folder that's already been in use
-    QStringList filter("*");
-    QFileInfoList subDirs = dir.entryInfoList(filter, QDir::Dirs);
-    // Loop through the subdirectories, adding a new timing point for each one that has a .settings file
-    for(int i = 0; i < subDirs.length(); i++) {
-        QFile settingsFile(subDirs.at(i).absoluteFilePath() + "/.settings");
-        if(!settingsFile.exists())
-            continue;
-        if(settingsFile.open(QFile::ReadOnly)) {
-            QTextStream in(&settingsFile);
-            QString ip = in.readLine();
-            QString secondIp = in.readLine();
-            QString maxViewsString = in.readLine();
-            bool ok;
-            int maxViews = maxViewsString.toInt(&ok);
-            QString channelString = in.readLine();
-            int channel = channelString.toInt();
-            TimingPoint *tPoint;
-            if(secondIp == NULL)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, "", 1, nextChannelNum++, this);
-            else if(maxViewsString == NULL || !ok)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, 1, nextChannelNum++, this);
-            else if(channelString == NULL)
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, nextChannelNum++, this);
-            else {
-                tPoint = new TimingPoint(directory, subDirs.at(i).baseName(), ip, secondIp, maxViews, channel, this);
-                nextChannelNum = qMax(nextChannelNum, channel);
-            }
-            connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
-            layout->addWidget(tPoint);
+    QFile saveQFile(directory + "/save.xml");
+    if(saveQFile.exists()) {
+        if(!saveQFile.open(QIODevice::ReadOnly)) {
+            // Show error about opening save file
+            QMessageBox msgBox;
+            msgBox.setText(tr("Failed to open the save file %1.  Please check that you have read permissions").arg(saveQFile.fileName()));
+            msgBox.exec();
+            return;
         }
-        settingsFile.close();
+
+        QDomDocument saveFile;
+        if(!saveFile.setContent(&saveQFile)) {
+            // Show error reading save file
+            QMessageBox msgBox;
+            msgBox.setText(tr("Failed to read the save file %1.  Please make sure it is a valid XML file.").arg(saveQFile.fileName()));
+            msgBox.exec();
+            saveQFile.close();
+            return;
+        }
+        saveQFile.close();
+
+        QDomElement docElem = saveFile.documentElement();
+        int summitDeviceNumber = docElem.attribute("devicenumber", "0").toInt();
+        summit->setDeviceNumber(summitDeviceNumber);
+        QDomElement n = docElem.firstChildElement("TimingPoint");
+        while(!n.isNull()) {
+            QString name = n.attribute("name");
+            QString maxViews = n.attribute("maxviews", "1");
+            QString summitChannel = n.attribute("channel", "1");
+            QList<TimingPoint::CameraInfo> info;
+            QDomElement child = n.firstChildElement("TimingCamera");
+            while(!child.isNull()) {
+                QString cameraName = child.firstChildElement("Name").text();
+                QString cameraIp = child.firstChildElement("IP").text();
+                bool atBack = child.firstChildElement("AtBack").text() == "true";
+                info.append(TimingPoint::CameraInfo(cameraName, cameraIp, atBack));
+                child = child.nextSiblingElement("TimingCamera");
+            }
+            TimingPoint *tPoint = new TimingPoint(directory, name, info, maxViews.toInt(), summitChannel.toInt(), this);
+            connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
+            connect(tPoint, SIGNAL(settingsChanged()), this, SLOT(saveSettings()));
+            tPoints.append(tPoint);
+            layout->addWidget(tPoint);
+            n = n.nextSiblingElement("TimingPoint");
+        }
+        saveSettings();
     }
-#endif
+
+    // Create a dialog asking about summit emulation
+    getSummitInfo();
 }
 
 void MainWindow::quit() {
     QApplication::quit();
+}
+
+void MainWindow::saveSettings() {
+    // Save an XML file
+    QFile file(directory + "save.xml");
+    if(!file.open(QIODevice::WriteOnly)) {
+        // Show error about opening save file
+        QMessageBox msgBox;
+        msgBox.setText(tr("Failed to write the save file %1.  Please check that you have write permissions").arg(file.fileName()));
+        msgBox.exec();
+        return;
+    }
+    QDomDocument saveFile;
+    QDomElement root = saveFile.createElement("CameraTiming");
+    root.setAttribute("devicenumber", summit->getDeviceNumber());
+    saveFile.appendChild(root);
+    for(int i = 0; i < tPoints.length(); i++) {
+        TimingPoint *tPoint = tPoints.at(i);
+        QDomElement point = saveFile.createElement("TimingPoint");
+        point.setAttribute("name", tPoint->getTitle());
+        point.setAttribute("maxviews", tPoint->getMaxViews());
+        point.setAttribute("channel", tPoint->getChannel());
+
+        QList<TimingPoint::CameraInfo> cameraInfo = tPoint->getCameraInfo();
+        for(int j = 0; j < cameraInfo.length(); j++) {
+            QDomElement camera = saveFile.createElement("TimingCamera");
+            point.appendChild(camera);
+            QDomElement name = saveFile.createElement("Name");
+            camera.appendChild(name);
+            QDomText nameText = saveFile.createTextNode(cameraInfo.at(j).name);
+            name.appendChild(nameText);
+            QDomElement ip = saveFile.createElement("IP");
+            camera.appendChild(ip);
+            QDomText ipText = saveFile.createTextNode(cameraInfo.at(j).ip);
+            ip.appendChild(ipText);
+            QDomElement atBack = saveFile.createElement("AtBack");
+            camera.appendChild(atBack);
+            bool fromBehind = cameraInfo.at(j).atBack;
+            if(fromBehind) {
+                QDomText atBackText = saveFile.createTextNode("true");
+                atBack.appendChild(atBackText);
+            } else {
+                QDomText atBackText = saveFile.createTextNode("false");
+                atBack.appendChild(atBackText);
+            }
+        }
+        root.appendChild(point);
+    }
+
+    QTextStream out(&file);
+    saveFile.save(out, 4);
+    file.close();
 }
 
 void MainWindow::newTimingPoint() {
@@ -204,7 +268,10 @@ void MainWindow::newTimingPoint() {
                                               cameraInfo,
                                               numViews->text().toInt(), channelNumber->text().toInt(), this);
         connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
+        connect(tPoint, SIGNAL(settingsChanged()), this, SLOT(saveSettings()));
+        tPoints.append(tPoint);
         layout->addWidget(tPoint);
+        saveSettings();
     }
 }
 
@@ -245,6 +312,7 @@ void MainWindow::getSummitInfo() {
         int deviceNum = deviceNumber->text().toInt(&ok);
         if(ok)
             summit->setDeviceNumber(deviceNum);
+        saveSettings();
     }
 }
 

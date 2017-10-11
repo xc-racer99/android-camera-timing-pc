@@ -16,6 +16,9 @@ public:
     explicit TimingCamera(QString dir, QString ip, QObject *parent = 0);
     ~TimingCamera();
 
+    bool getAtBack(void);
+    QString getIpAddress(void);
+    QString getName(void);
     void setAtBack(bool fromBehind);
     void addBlankImage(qint64 time);
 
@@ -49,7 +52,7 @@ private:
     void startBackgroundThread();
 
 signals:
-    void settingsChanged(QString newIp);
+    void settingsChanged();
     void newImage();
 public slots:
     void changeImage(int index);

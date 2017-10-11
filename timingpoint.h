@@ -28,6 +28,10 @@ public:
     explicit TimingPoint(QString directory, QString name, QList<CameraInfo> cameras, int maxNum, int channelNum, QWidget *parent = 0);
     ~TimingPoint();
 
+    QList<CameraInfo> getCameraInfo();
+    QString getTitle();
+    int getChannel();
+    int getMaxViews();
 private:
     void startBackgroundThread(QString ip, QString name);
     QString roundTime(QTime time, int nth);
@@ -48,8 +52,8 @@ private:
 signals:
     void changeImage(int index);
     void newEntry(int channel, QString bib, QString time);
+    void settingsChanged();
 private slots:
-    void saveSettings();
     void incrementSliderMax();
     void updateImageInfo(int index);
     // Button handlers

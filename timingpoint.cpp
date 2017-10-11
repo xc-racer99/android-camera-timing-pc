@@ -153,11 +153,8 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
         TimingCamera *temp = timingCameras.at(i);
         connect(this, SIGNAL(changeImage(int)), temp, SLOT(changeImage(int)));
         connect(temp, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
-        connect(temp, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
+        connect(temp, SIGNAL(settingsChanged()), this, SIGNAL(settingsChanged()));
     }
-
-    // Save the settings
-    saveSettings();
 
     // Trigger change to image
     imageSlider->triggerAction(QAbstractSlider::SliderToMinimum);
@@ -357,18 +354,26 @@ QString TimingPoint::roundTime(QTime time, int nth) {
     return actualTime;
 }
 
-void TimingPoint::saveSettings() {
+QList<TimingPoint::CameraInfo> TimingPoint::getCameraInfo() {
     // Save the IPs to a file
-    /*
-    QFile settingsFile(subDirectory + ".settings");
-    settingsFile.open(QIODevice::WriteOnly);
-    QTextStream out(&settingsFile);
-    out << mainCamera->ipAddress->text() + "\n" + secondCamera->ipAddress->text()
-        + "\n" + maxViews + "\n" + channel;
-    settingsFile.flush();
-    settingsFile.close();
-    */
-    //FIXME - implement this for n number of cameras
+    QList<CameraInfo> info;
+    for(int i = 0; i < timingCameras.length(); i++) {
+        TimingCamera *temp = timingCameras.at(i);
+        info.append(CameraInfo(temp->getName(), temp->getIpAddress(), temp->getAtBack()));
+    }
+    return info;
+}
+
+QString TimingPoint::getTitle() {
+    return title();
+}
+
+int TimingPoint::getChannel() {
+    return channel;
+}
+
+int TimingPoint::getMaxViews() {
+    return maxViews;
 }
 
 void TimingPoint::incrementSliderMax() {

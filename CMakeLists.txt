@@ -11,6 +11,7 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt5Widgets)
 find_package(Qt5Network)
 find_package(Qt5SerialPort)
+find_package(Qt5Xml)
 
 # Add resources
 qt5_add_resources(UI_RESOURCES images.qrc)
@@ -36,6 +37,7 @@ target_link_libraries (AndroidCameraTiming bibnumber LibCRC)
 target_link_libraries(AndroidCameraTiming Qt5::Widgets)
 target_link_libraries(AndroidCameraTiming Qt5::Network)
 target_link_libraries(AndroidCameraTiming Qt5::SerialPort)
+target_link_libraries(AndroidCameraTiming Qt5::Xml)
 
 # build a CPack driven installer package
 include (InstallRequiredSystemLibraries)
