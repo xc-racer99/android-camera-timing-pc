@@ -350,6 +350,10 @@ void TimingPoint::updateImageInfo(int index) {
     while(!timestampFound && i < numCameras) {
         // Try updating the timestamp
         TimingCamera *tempCamera = timingCameras.at(i);
+        if(index >= tempCamera->entries.length()) {
+            i++;
+            continue;
+        }
         qint64 timestampValue = tempCamera->entries.at(index).timestamp;
 
         if(timestampValue != 0) {
@@ -378,10 +382,14 @@ void TimingPoint::updateImageInfo(int index) {
     if(bibNumEdit->text().isEmpty() && timingCameras.length() > 0) {
         bool allMatch = true;
         TimingCamera *temp = timingCameras.at(0);
-        int firstBibNumber = temp->entries.at(index).bibNumber;
+        int firstBibNumber = temp->entries.back().bibNumber;
         i = 1;
         while(allMatch && i < numCameras) {
             temp = timingCameras.at(i);
+            if(index >= temp->entries.length()) {
+                i++;
+                continue;
+            }
             int number = temp->entries.at(index).bibNumber;
             if(number == 0 || number != firstBibNumber) {
                 // Mismatch
