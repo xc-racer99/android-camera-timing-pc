@@ -32,6 +32,7 @@
 #include <QMessageBox>
 #include <QPixmap>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSlider>
 #include <QThread>
 #include <QTimer>
@@ -97,40 +98,55 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
 
     // Our layout
     QGridLayout *gridLayout = new QGridLayout(this);
-    gridLayout->setContentsMargins(5, 5, 5, 5);
-
-    gridLayout->addWidget(plusButton, 6, 3, 1, 1);
-    gridLayout->addWidget(timestampLabel, 0, 5, 1, 1);
-    gridLayout->addWidget(bibNumEdit, 1, 6, 1, 1);
-    gridLayout->addWidget(nextButton, 2, 5, 1, 2);
-    gridLayout->addWidget(bibNumLabel, 1, 5, 1, 1);
-    gridLayout->addWidget(imageSlider, 6, 1, 1, 2);
-    gridLayout->addWidget(timestamp, 0, 6, 1, 1);
-    gridLayout->addWidget(minusButton, 6, 0, 1, 1);
+    gridLayout->setContentsMargins(3, 3, 3, 3);
 
     // Layouts of images and status boxes
-    QWidget *imageHolderWidget = new QWidget(this);
-    QWidget *statusBoxWidget = new QWidget(this);
-    QHBoxLayout *imageHolderLayout = new QHBoxLayout(imageHolderWidget);
-    QVBoxLayout *statusBoxLayout = new QVBoxLayout(statusBoxWidget);
-    gridLayout->addWidget(imageHolderWidget, 0, 0, 6, 4);
-    gridLayout->addWidget(statusBoxWidget, 4, 5, 2, 4);
+    QScrollArea *imageHolderScroll = new QScrollArea(this);
+    QScrollArea *statusBoxScroll = new QScrollArea(this);
+    imageHolderScroll->setWidgetResizable(true);
+    statusBoxScroll->setWidgetResizable(true);
+    QWidget *imageHolderScrollWidget = new QWidget(this);
+    QWidget *statusBoxScrollWidget = new QWidget(this);
 
+    QHBoxLayout *imageHolderLayout = new QHBoxLayout(imageHolderScroll);
+    QVBoxLayout *statusBoxLayout = new QVBoxLayout(statusBoxScroll);
+
+    // Set widget of scroll area
+    imageHolderScroll->setWidget(imageHolderScrollWidget);
+    statusBoxScroll->setWidget(statusBoxScrollWidget);
+
+    // Set layout of scroll area widget
+    imageHolderScrollWidget->setLayout(imageHolderLayout);
+    statusBoxScrollWidget->setLayout(statusBoxLayout);
+
+    // Add images and status boxes to layouts
     for(int i = 0; i < timingCameras.length(); i++) {
         TimingCamera *temp = timingCameras.at(i);
         imageHolderLayout->addWidget(temp->imageHolder);
         statusBoxLayout->addWidget(temp->statusBox);
     }
 
-    imageHolderWidget->setLayout(imageHolderLayout);
-    statusBoxWidget->setLayout(statusBoxLayout);
+    gridLayout->addWidget(imageHolderScroll, 0, 0, 7, 3);
+    gridLayout->addWidget(statusBoxScroll, 6, 4, 1, 2);
 
-    // Set stretch for the parts of the image
-    gridLayout->setColumnStretch(1, 5);
-    gridLayout->setColumnStretch(2, 5);
+    gridLayout->addWidget(timestampLabel, 0, 4, 1, 1);
+    gridLayout->addWidget(timestamp, 0, 5, 1, 1);
 
-    gridLayout->setRowStretch(3, 10);
-    gridLayout->setColumnStretch(4, 10);
+    gridLayout->addWidget(bibNumLabel, 1, 4, 1, 1);
+    gridLayout->addWidget(bibNumEdit, 1, 5, 1, 1);
+
+    gridLayout->addWidget(nextButton, 2, 4, 1, 2);
+
+    gridLayout->addWidget(minusButton, 7, 0, 1, 1);
+    gridLayout->addWidget(imageSlider, 7, 1, 1, 1);
+    gridLayout->addWidget(plusButton, 7, 2, 1, 1);
+
+    // Set stretch for the image
+    gridLayout->setColumnStretch(1, 15);
+
+    // Spacing on right-hand side
+    gridLayout->setRowStretch(3, 1);
+    gridLayout->setRowStretch(5, 1);
 
     setLayout(gridLayout);
 
