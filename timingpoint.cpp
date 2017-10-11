@@ -151,7 +151,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     // Connections to Cameras
     for(int i = 0; i < timingCameras.length(); i++) {
         TimingCamera *temp = timingCameras.at(i);
-        connect(this, SIGNAL(changeImage(int)), temp, SLOT(changeImage(int));
+        connect(this, SIGNAL(changeImage(int)), temp, SLOT(changeImage(int)));
         connect(temp, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
         connect(temp, SIGNAL(settingsChanged(QString)), this, SLOT(saveSettings()));
     }
@@ -295,15 +295,12 @@ void TimingPoint::updateImageInfo(int index) {
     while(!timestampFound && i < numCameras) {
         // Try updating the timestamp
         TimingCamera *tempCamera = timingCameras.at(i);
-        QString filename = tempCamera->entries.at(index).file;
-        QString rawTimestamp = filename.section("/", -1);
-        rawTimestamp.chop(4);
-        //Convert the raw timestamp to user-readable string
-        bool ok;
-        QDateTime time;
-        qint64 temp = rawTimestamp.toLongLong(&ok);
-        if(ok) {
-            time = QDateTime::fromMSecsSinceEpoch(temp);
+        qint64 timestampValue = tempCamera->entries.at(index).timestamp;
+
+        if(timestampValue != 0) {
+            //Convert the raw timestamp to user-readable string
+            QDateTime time;
+            time = QDateTime::fromMSecsSinceEpoch(timestampValue);
             timestamp->setText(time.time().toString("hh:mm:ss.zzz"));
             // Enable the next button
             nextButton->setEnabled(true);
@@ -377,29 +374,43 @@ void TimingPoint::saveSettings() {
 void TimingPoint::incrementSliderMax() {
     int numCameras = timingCameras.length();
     if(numCameras == 0) {
-        sliderMax = 0;
-        doIncrementSliderMax();
+        imageSlider->setMaximum(0);
     } else {
         bool allMatch = true;
         TimingCamera *temp = timingCameras.at(0);
-        sliderMax = temp->entries.length();
+        int maxEntries = temp->entries.length();
+        qint64 biggestTimestamp = temp->entries.back().timestamp;
+        qint64 biggestGap = 0;
         for(int i = 1; i < numCameras; i++) {
             temp = timingCameras.at(i);
             int length = temp->entries.length();
-            if(length > sliderMax)
-                sliderMax = length;
-            else if(length != sliderMax)
+            if(length > maxEntries) {
+                maxEntries = length;
                 allMatch = false;
+            } else if(length < maxEntries)
+                allMatch = false;
+            qint64 currentTimestamp = temp->entries.back().timestamp;
+            if(currentTimestamp > biggestTimestamp)
+                biggestTimestamp = currentTimestamp;
+            qint64 currentGap = abs(biggestTimestamp - currentTimestamp);
+            if(currentGap > biggestGap)
+                biggestGap = currentGap;
         }
-        if(!allMatch) {
-            // Delay 1/2 a second to hopefully get things in sync before incrementing the slider
-            QTimer::singleShot(750, this, SLOT(doIncrementSliderMax()));
-        } else {
-            doIncrementSliderMax();
-        }
-    }
-}
 
-void TimingPoint::doIncrementSliderMax() {
-    imageSlider->setMaximum(sliderMax);
+        if(allMatch) {
+            imageSlider->setMaximum(maxEntries - 1);
+        } else {
+            if(biggestGap > 15000) {
+                // Gap detected, sync up number of images
+                for(int i = 0; i < numCameras; i++) {
+                    temp = timingCameras.at(i);
+                    while(temp->entries.length() < maxEntries)
+                        temp->addBlankImage(biggestTimestamp);
+                }
+            }
+            imageSlider->setMaximum(maxEntries - 1);
+        }
+        // Trigger the slider move, so if we were showing an old image,the new one will appear
+        imageSlider->triggerAction(QAbstractSlider::SliderMove);
+    }
 }

@@ -43,7 +43,6 @@ private:
     int channel;
     QStringList bibsUsed;
     int maxViews;
-    int sliderMax;
     QHash<QString, QString> hash;
 
 signals:
@@ -52,7 +51,6 @@ signals:
 private slots:
     void saveSettings();
     void incrementSliderMax();
-    void doIncrementSliderMax();
     void updateImageInfo(int index);
     // Button handlers
     void submitButtonPushed();
