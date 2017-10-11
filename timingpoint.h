@@ -54,6 +54,7 @@ signals:
     void newEntry(int channel, QString bib, QString time);
     void settingsChanged();
 private slots:
+    void changePointSettings();
     void incrementSliderMax();
     void updateImageInfo(int index);
     // Button handlers

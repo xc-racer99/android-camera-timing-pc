@@ -17,10 +17,12 @@
  **/
 
 #include <QDateTime>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
-#include <QFileDialog>
+#include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -96,6 +98,10 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     plusButton->setIcon(QIcon(":/images/images/plus-icon.png"));
     plusButton->setIconSize(QSize(25, 25));
 
+    // Settings button
+    QPushButton *settingsButton = new QPushButton(this);
+    settingsButton->setText("Point Settings");
+
     // Our layout
     QGridLayout *gridLayout = new QGridLayout(this);
     gridLayout->setContentsMargins(3, 3, 3, 3);
@@ -137,6 +143,8 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
 
     gridLayout->addWidget(nextButton, 2, 4, 1, 2);
 
+    gridLayout->addWidget(settingsButton, 4, 4, 1, 2);
+
     gridLayout->addWidget(minusButton, 7, 0, 1, 1);
     gridLayout->addWidget(imageSlider, 7, 1, 1, 1);
     gridLayout->addWidget(plusButton, 7, 2, 1, 1);
@@ -157,6 +165,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     connect(nextButton, SIGNAL(clicked(bool)), this, SLOT(submitButtonPushed()));
     connect(plusButton, SIGNAL(clicked(bool)), this, SLOT(plusButtonPushed()));
     connect(minusButton, SIGNAL(clicked(bool)), this, SLOT(minusButtonPushed()));
+    connect(settingsButton, SIGNAL(clicked(bool)), this, SLOT(changePointSettings()));
 
     // When pushing enter on the bib number, pretend the next button was pushed
     connect(bibNumEdit, SIGNAL(returnPressed()), this, SLOT(submitButtonPushed()));
@@ -295,6 +304,39 @@ void TimingPoint::minusButtonPushed() {
     int sliderPosition = imageSlider->sliderPosition();
     if(sliderPosition >imageSlider->minimum()) {
         imageSlider->triggerAction(QAbstractSlider::SliderSingleStepSub);
+    }
+}
+
+void TimingPoint::changePointSettings() {
+    // Get connection info
+    QDialog dialog;
+    QFormLayout formLayout(&dialog);
+
+    // Max views
+    QLineEdit *maxViewsEdit = new QLineEdit(&dialog);
+    maxViewsEdit->setText(QString("%1").arg(maxViews));
+    QLabel maxViewsLabel(tr("Max Views:"));
+    formLayout.addRow(&maxViewsLabel, maxViewsEdit);
+
+    // Summit channel
+    QLineEdit *summitChannel = new QLineEdit(&dialog);
+    summitChannel->setText(QString("%1").arg(channel));
+    QLabel summitChannelLabel(tr("Summit Channel:"));
+    formLayout.addRow(&summitChannelLabel, summitChannel);
+
+    // Buttons
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               Qt::Horizontal, &dialog);
+    formLayout.addRow(&buttonBox);
+
+    // Make connections
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    if (dialog.exec() == QDialog::Accepted) {
+        maxViews = maxViewsEdit->text().toInt();
+        channel = summitChannel->text().toInt();
+        emit settingsChanged();
     }
 }
 
