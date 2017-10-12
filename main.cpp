@@ -26,6 +26,11 @@ int main(int argc, char* argv[])
 
     app.setWindowIcon(QIcon(":/images/images/icon.png"));
 
+    // Initialize QSettings
+    QCoreApplication::setOrganizationName("Bakker Enterprises");
+    QCoreApplication::setOrganizationDomain("skilarchhills.ca");
+    QCoreApplication::setApplicationName("Camera Timing");
+
     MainWindow window;
 
     window.showMaximized();

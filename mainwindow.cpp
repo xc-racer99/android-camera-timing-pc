@@ -27,6 +27,7 @@
 #include <QFormLayout>
 #include <QList>
 #include <QMessageBox>
+#include <QSettings>
 #include <QScrollArea>
 #include <QTextStream>
 
@@ -37,16 +38,22 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     nextChannelNum = 1;
 
+    QSettings settings;
+
     // Create a file dialog box
     QFileDialog *fileDialog;
     while(directory.isEmpty()) {
         fileDialog = new QFileDialog();
+        fileDialog->setDirectory(settings.value("last_dir_used").toString());
         fileDialog->setFileMode(QFileDialog::Directory);
         if(fileDialog->exec()) {
             directory = fileDialog->selectedFiles().at(0) + QDir::separator();
         }
     }
     delete fileDialog;
+
+    // Save the folder
+    settings.setValue("last_dir_used", directory);
 
     // Create the summit
     summit = new SummitEmulator;
