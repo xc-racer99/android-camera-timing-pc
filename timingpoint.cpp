@@ -476,6 +476,6 @@ void TimingPoint::incrementSliderMax() {
             imageSlider->setMaximum(maxEntries - 1);
         }
         // Trigger the slider move, so if we were showing an old image,the new one will appear
-        imageSlider->triggerAction(QAbstractSlider::SliderMove);
+        updateImageInfo(imageSlider->sliderPosition());
     }
 }
