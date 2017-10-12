@@ -24,12 +24,23 @@ add_subdirectory (3rd-Party/libcrc)
 include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
 add_subdirectory(3rd-Party/bibnumber)
 
-# Tell CMake to create the executable
-add_executable(AndroidCameraTiming main.cpp
+# Source files
+set(CameraTiming_SRCs
+	main.cpp
 	mainwindow.cpp mytcpsocket.cpp
 	ocrpipeline.cpp summitemulator.cpp
 	timingcamera.cpp timingpoint.cpp
 	${UI_RESOURCES})
+
+if(WIN32)
+	enable_language(RC)
+	configure_file(images/icon.ico ${CMAKE_CURRENT_BINARY_DIR}/icon.ico COPYONLY)
+	list(APPEND CameraTiming_SRCs windows_icon.rc)
+endif()
+
+# Tell CMake to create the executable
+add_executable(AndroidCameraTiming
+	${CameraTiming_SRCs})
 
 target_link_libraries (AndroidCameraTiming bibnumber LibCRC)
 
