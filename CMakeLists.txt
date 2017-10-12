@@ -27,7 +27,7 @@ add_subdirectory(3rd-Party/bibnumber)
 # Tell CMake to create the executable
 add_executable(AndroidCameraTiming main.cpp
 	mainwindow.cpp mytcpsocket.cpp
-	summitemulator.cpp
+	ocrpipeline.cpp summitemulator.cpp
 	timingcamera.cpp timingpoint.cpp
 	${UI_RESOURCES})
 

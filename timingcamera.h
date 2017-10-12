@@ -60,6 +60,7 @@ private slots:
     void addNewImage(QString fileName, int bibNumber);
     void changeSettings();
     void reconnectToServer();
+    void runOcr(QString fileName);
     void setConnectionStatus(QString status);
     void zoomIn();
     void zoomOut();

@@ -393,7 +393,7 @@ void TimingPoint::updateImageInfo(int index) {
             }
         }
 
-        if(allMatch) {
+        if(allMatch && firstBibNumber != 0) {
             bibNumEdit->setText(QString("%1").arg(firstBibNumber));
             submitButtonPushed();
         }

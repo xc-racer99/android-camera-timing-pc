@@ -32,6 +32,8 @@
 #include <QTimer>
 
 #include "mytcpsocket.h"
+#include "ocrpipeline.h"
+
 #include "timingcamera.h"
 
 TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(parent)
@@ -210,13 +212,11 @@ void TimingCamera::startBackgroundThread() {
     // Start the separate thread and move the socket to it
     QThread *networkThread = new QThread();
     MyTcpSocket *socket = new MyTcpSocket(ipAddress->text(), directory);
-    socket->setAtBack(fromBack);
-
     socket->moveToThread(networkThread);
 
     // Connect signals and slots
     connect(socket, SIGNAL(serverStatus(QString)), this, SLOT(setConnectionStatus(QString)));
-    connect(socket, SIGNAL(newImage(QString,int)), this, SLOT(addNewImage(QString,int)));
+    connect(socket, SIGNAL(newImage(QString)), this, SLOT(runOcr(QString)));
     connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
     connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
     connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
@@ -246,6 +246,18 @@ void TimingCamera::changeImage(int index) {
     scaleFactor = 1.0;
 
     actualImage->resize(500, newHeight);
+}
+
+void TimingCamera::runOcr(QString fileName) {
+    OcrPipeline *pipeline = new OcrPipeline(fileName, directory, fromBack);
+    QThread *thread = new QThread();
+    pipeline->moveToThread(thread);
+
+    connect(thread, &QThread::finished, pipeline, &QObject::deleteLater);
+    connect(thread, SIGNAL(started()), pipeline, SLOT(process()));
+    connect(pipeline, SIGNAL(newImage(QString,int)), this, SLOT(addNewImage(QString,int)));
+
+    thread->start();
 }
 
 void TimingCamera::addNewImage(QString fileName, int bibNumber) {

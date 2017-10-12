@@ -16,17 +16,14 @@ public:
 
 signals:
     void finished();
-    void newImage(QString filename, int bibNumber);
+    void newImage(QString filename);
     void serverStatus(QString status);
 public slots:
     void process();
-    void setAtBack(bool atBack);
 private:
     QTcpSocket *socket;
     QString hostName;
     QString directory;
-
-    bool fromBehind;
 
     qint64 bytesToLong(QByteArray b);
 };
