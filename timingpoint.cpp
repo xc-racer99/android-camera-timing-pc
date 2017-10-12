@@ -113,6 +113,8 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     // Layouts of images and status boxes
     QScrollArea *imageHolderScroll = new QScrollArea(this);
     QScrollArea *statusBoxScroll = new QScrollArea(this);
+    imageHolderScroll->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
+    imageHolderScroll->setMinimumHeight(600);
     imageHolderScroll->setWidgetResizable(true);
     statusBoxScroll->setWidgetResizable(true);
     QWidget *imageHolderScrollWidget = new QWidget(this);
