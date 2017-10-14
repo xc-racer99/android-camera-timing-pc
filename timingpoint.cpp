@@ -65,6 +65,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
         timingCameras.append(new TimingCamera(subDirectory + cameras.at(i).name, cameras.at(i).ip));
         TimingCamera *temp = timingCameras.last();
         temp->setAtBack(cameras.at(i).atBack);
+        temp->setTimestampOffset(cameras.at(i).offset);
         int numImages = temp->entries.length();
         if(numImages > maxNumberOfImages)
             maxNumberOfImages = numImages;
@@ -421,7 +422,7 @@ QList<TimingPoint::CameraInfo> TimingPoint::getCameraInfo() {
     QList<CameraInfo> info;
     for(int i = 0; i < timingCameras.length(); i++) {
         TimingCamera *temp = timingCameras.at(i);
-        info.append(CameraInfo(temp->getName(), temp->getIpAddress(), temp->getAtBack()));
+        info.append(CameraInfo(temp->getName(), temp->getIpAddress(), temp->getTimestampOffset(), temp->getAtBack()));
     }
     return info;
 }

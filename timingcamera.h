@@ -19,7 +19,9 @@ public:
     bool getAtBack(void);
     QString getIpAddress(void);
     QString getName(void);
+    qint64 getTimestampOffset(void);
     void setAtBack(bool fromBehind);
+    void setTimestampOffset(qint64 offset);
     void addBlankImage(qint64 time);
 
     struct Entry {
@@ -43,6 +45,7 @@ private:
     QPushButton *plusButton;
     QScrollArea *scrollArea;
     QString directory;
+    qint64 timeOffset;
 
     bool fromBack;
     float scaleFactor;

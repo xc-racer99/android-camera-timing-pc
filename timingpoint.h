@@ -20,9 +20,10 @@ public:
     struct CameraInfo {
         QString name;
         QString ip;
+        qint64 offset;
         bool atBack;
 
-        CameraInfo(QString cameraName, QString ipAddress, bool atBackArg) : name(cameraName), ip(ipAddress), atBack(atBackArg) {}
+        CameraInfo(QString cameraName, QString ipAddress, qint64 timeOffset, bool atBackArg) : name(cameraName), ip(ipAddress), offset(timeOffset), atBack(atBackArg) {}
     };
 
     explicit TimingPoint(QString directory, QString name, QList<CameraInfo> cameras, int maxNum, int channelNum, QWidget *parent = 0);

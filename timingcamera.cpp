@@ -46,6 +46,8 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     fromBack = false;
 
+    timeOffset = 0;
+
     QDir temp(directory);
     if(!temp.exists())
         temp.mkpath(dir);
@@ -151,6 +153,10 @@ void TimingCamera::setAtBack(bool fromBehind) {
     fromBack = fromBehind;
 }
 
+void TimingCamera::setTimestampOffset(qint64 offset) {
+    timeOffset = offset;
+}
+
 bool TimingCamera::getAtBack() {
     return fromBack;
 }
@@ -162,6 +168,10 @@ QString TimingCamera::getIpAddress() {
 QString TimingCamera::getName() {
     QDir info(directory);
     return info.dirName();
+}
+
+qint64 TimingCamera::getTimestampOffset() {
+    return timeOffset;
 }
 
 void TimingCamera::reconnectToServer() {
@@ -177,6 +187,12 @@ void TimingCamera::reconnectToServer() {
 void TimingCamera::changeSettings() {
     QDialog *dialog = new QDialog();
     QFormLayout *layout = new QFormLayout(dialog);
+
+    QLabel *offsetLabel = new QLabel(dialog);
+    offsetLabel->setText(tr("Time Offset (ms):"));
+    QLineEdit *offsetLineEdit = new QLineEdit(dialog);
+    offsetLineEdit->setText(QString("%1").arg(timeOffset));
+    layout->addRow(offsetLabel, offsetLineEdit);
 
     QCheckBox *atBack = new QCheckBox(dialog);
     atBack->setText(tr("From Behind?"));
@@ -196,6 +212,7 @@ void TimingCamera::changeSettings() {
 
     if(dialog->exec() == QDialog::Accepted) {
         setAtBack(atBack->checkState());
+        setTimestampOffset(offsetLineEdit->text().toLongLong());
     }
     emit settingsChanged();
 }
@@ -274,8 +291,12 @@ void TimingCamera::addNewImage(QString fileName, int bibNumber) {
     // Add the new image to the list of paths
     QFileInfo info(fileName);
     QString rawTimestamp = info.baseName();
-    qint64 timestamp = rawTimestamp.toLongLong();
-    entries.append(Entry(fileName, bibNumber, timestamp));
+    bool ok;
+    qint64 timestamp = rawTimestamp.toLongLong(&ok);
+    if(ok)
+        entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
+    else
+        entries.append(Entry(fileName, bibNumber, 0));
 
     // Create a delay of 1s to hopefully give time for the other thread(s) to finish if they're still going
     QTimer::singleShot(1000, this, SIGNAL(newImage()));

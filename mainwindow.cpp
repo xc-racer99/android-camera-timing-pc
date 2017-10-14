@@ -146,7 +146,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 QString cameraName = child.firstChildElement("Name").text();
                 QString cameraIp = child.firstChildElement("IP").text();
                 bool atBack = child.firstChildElement("AtBack").text() == "true";
-                info.append(TimingPoint::CameraInfo(cameraName, cameraIp, atBack));
+                qint64 timeOffset = child.firstChildElement("TimeOffset").text().toLongLong();
+                info.append(TimingPoint::CameraInfo(cameraName, cameraIp, timeOffset, atBack));
                 child = child.nextSiblingElement("TimingCamera");
             }
             TimingPoint *tPoint = new TimingPoint(directory, name, info, maxViews.toInt(), summitChannel.toInt(), this);
@@ -210,6 +211,10 @@ void MainWindow::saveSettings() {
                 QDomText atBackText = saveFile.createTextNode("false");
                 atBack.appendChild(atBackText);
             }
+            QDomElement timeOffset = saveFile.createElement("TimeOffset");
+            camera.appendChild(timeOffset);
+            QDomText timeOffsetText = saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).offset));
+            timeOffset.appendChild(timeOffsetText);
         }
         root.appendChild(point);
     }
@@ -269,8 +274,8 @@ void MainWindow::newTimingPoint() {
         }
 
         QList<TimingPoint::CameraInfo> cameraInfo;
-        cameraInfo.append(TimingPoint::CameraInfo("Main", mainIp->text(), false));
-        cameraInfo.append(TimingPoint::CameraInfo("Secondary", secondIp->text(), false));
+        cameraInfo.append(TimingPoint::CameraInfo("Main", mainIp->text(), 0, false));
+        cameraInfo.append(TimingPoint::CameraInfo("Secondary", secondIp->text(), 0, false));
         TimingPoint *tPoint = new TimingPoint(directory,pointName->text(),
                                               cameraInfo,
                                               numViews->text().toInt(), channelNumber->text().toInt(), this);
