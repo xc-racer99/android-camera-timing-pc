@@ -17,6 +17,7 @@
  **/
 
 #include <QCheckBox>
+#include <QDateTime>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -26,6 +27,7 @@
 #include <QImageReader>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QPainter>
 #include <QScrollArea>
 #include <QSlider>
 #include <QThread>
@@ -237,6 +239,14 @@ void TimingCamera::changeImage(int index) {
     // Scale the image up if the width is smaller than 500px
     if(image.width() < 500)
         image = image.scaledToWidth(500);
+
+    // Overlay the timestamp on the image
+    QDateTime time = QDateTime::fromMSecsSinceEpoch(entries.at(index).timestamp);
+    QPainter *painter = new QPainter(&image);
+    painter->setPen(Qt::blue);
+    painter->setFont(QFont("Arial", 100));
+    painter->drawText(image.rect(), Qt::AlignLeft|Qt::AlignTop, time.time().toString("hh:mm:ss.zzz"));
+    delete(painter);
 
     // Re-size the scroll area
     int newHeight = qRound((float)image.height()/(float)image.width()*500.0);
