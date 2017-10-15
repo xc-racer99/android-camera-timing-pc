@@ -52,6 +52,7 @@ private:
 
 signals:
     void changeImage(int index);
+    void checkEntries(int maxEntries, qint64 largestTimestamp);
     void newEntry(int channel, QString bib, QString time);
     void settingsChanged();
 private slots:

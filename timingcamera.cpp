@@ -146,7 +146,7 @@ TimingCamera::~TimingCamera() {
 void TimingCamera::addBlankImage(qint64 time) {
     QString newName = QString("%1/%2.png").arg(directory).arg(time);
     QFile::copy(":images/images/No_image.png", newName);
-    entries.append(Entry(newName, 0, time));
+    entries.append(Entry(newName, 0, 0));
 }
 
 void TimingCamera::setAtBack(bool fromBehind) {
@@ -246,8 +246,11 @@ void TimingCamera::startBackgroundThread() {
 }
 
 void TimingCamera::changeImage(int index) {
-    if(index > entries.length() - 1)
-        index = entries.length() - 1;
+    if(index > entries.length() - 1) {
+        qDebug("Warning: Index is greater than permissible");
+        index = 0;
+    }
+
     QImageReader reader(entries.at(index).file);
     reader.setAutoTransform(true);
 
@@ -293,13 +296,33 @@ void TimingCamera::addNewImage(QString fileName, int bibNumber) {
     QString rawTimestamp = info.baseName();
     bool ok;
     qint64 timestamp = rawTimestamp.toLongLong(&ok);
-    if(ok)
-        entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
-    else
+    if(ok) {
+        // Check the last entry and see if it was a dummy
+        QFileInfo tempFile = QFile(entries.back().file);
+        qint64 lastActualTimestamp = tempFile.baseName().toLongLong();
+        if(entries.back().timestamp == 0 && lastActualTimestamp - timestamp < 2000 && lastActualTimestamp - timestamp > -2000)
+            entries.replace(entries.length() - 1, Entry(fileName, bibNumber, timestamp + timeOffset));
+        else
+            entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
+    } else
         entries.append(Entry(fileName, bibNumber, 0));
 
     // Create a delay of 1s to hopefully give time for the other thread(s) to finish if they're still going
     QTimer::singleShot(1000, this, SIGNAL(newImage()));
+}
+
+void TimingCamera::checkEntries(int numEntries, qint64 timestamp) {
+    if(numEntries == entries.length()) {
+        // All good, all cameras are in sync
+        return;
+    }
+    if(entries.length() > numEntries)
+        qDebug("Error: Number of entries here is greater than greatest number of entries.  This shouldn't be possible");
+
+    // Add extra dummy images as needed
+    for(int numDiff = numEntries - entries.length();numDiff > 0; numDiff--) {
+        addBlankImage(timestamp - numDiff);
+    }
 }
 
 void TimingCamera::zoomIn() {

@@ -59,6 +59,7 @@ signals:
     void newImage();
 public slots:
     void changeImage(int index);
+    void checkEntries(int numEntries, qint64 timestamp);
 private slots:
     void addNewImage(QString fileName, int bibNumber);
     void changeSettings();
