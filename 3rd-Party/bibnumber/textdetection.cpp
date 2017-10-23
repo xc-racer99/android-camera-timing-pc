@@ -143,7 +143,7 @@ void normalizeImage (const Mat& input, Mat& output) {
 void renderComponents (const Mat& SWTImage, std::vector<std::vector<SWTPoint2d> > & components, Mat& output) {
     output.setTo(0);
 
-	for (auto& component : components) {
+    for (auto& component : components) {
         for (auto& pit : component) {
             output.at<float>(pit.y, pit.x) = SWTImage.at<float>(pit.y, pit.x);
         }
@@ -865,6 +865,25 @@ bool chainSortLength (const Chain &lhs, const Chain &rhs) {
     return lhs.components.size() > rhs.components.size();
 }
 
+bool includes(std::vector<int> v, std::vector<int> V) {
+    if (v.size() > V.size())
+        return false;
+
+    for (int i=0,iend=v.size();i<iend;i++)
+    {
+        int j;
+        int jend = V.size();
+        for (j=0;j<jend;j++)
+        {
+            if (v[i] == V[j])
+                break;
+        }
+        if (j==jend)
+            return false;
+    }
+    return true;
+}
+
 std::vector<Chain> makeChains( const Mat& colorImage,
                  std::vector<std::vector<SWTPoint2d> > & components,
                  std::vector<Point2dFloat> & compCenters,
@@ -1139,11 +1158,45 @@ std::vector<Chain> makeChains( const Mat& colorImage,
 
     std::vector<Chain> newchains;
     newchains.reserve(chains.size());
-    for (std::vector<Chain>::iterator cit = chains.begin(); cit != chains.end(); cit++) {
-        if (cit->components.size() >= minChainLength) {
-            newchains.push_back(*cit);
-        }
+
+    /* sort chains and remove duplicate components within chains */
+    for (std::vector<Chain>::iterator cit = chains.begin(); cit != chains.end();
+            cit++) {
+
+        /* remove duplicate components */
+        std::sort(cit->components.begin(), cit->components.end());
+        cit->components.erase(
+        std::unique(cit->components.begin(), cit->components.end()),
+        cit->components.end());
     }
+
+    /* now add all chains */
+    for (int i=0,iend=chains.size(); i<iend; i++)
+    {
+        /* only add chains longer than minimum size */
+        if (chains[i].components.size() < minChainLength) {
+            std::cout << "Reject chain " << i << " on minimum chain length" << std::endl;
+            break;
+        }
+
+        /* now make sure that chain is not already included
+         * in another chain */
+        int j;
+        for (j=0; j<iend; j++)
+        {
+            if ( (i!=j) && (includes(chains[i].components, chains[j].components)))
+                break;
+        }
+        if (j<iend)
+        {
+            std::cout << "Reject chain " << i << " already included in chain " << j << std::endl;
+            break;
+        }
+
+        /* all good, add that chain */
+        newchains.push_back(chains[i]);
+    }
+
     chains = newchains;
     std::cout << chains.size() << " chains after merging" << std::endl;
     return chains;
