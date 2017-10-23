@@ -11,7 +11,6 @@ namespace pipeline
 	public:
 		int processImage(cv::Mat& img, std::string svmModel, std::vector<int>& bibNumbers);
 	private:
-		textdetection::TextDetector textDetector;
 		textrecognition::TextRecognizer textRecognizer;
 	};
 

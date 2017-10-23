@@ -103,7 +103,7 @@ int Pipeline::processImage(
 #else
 	IplImage ipl_img = img;
 	std::vector<std::string> text;
-	struct TextDetectionParams params = {
+	struct DetectText::TextDetectionParams params = {
 						1, /* darkOnLight */
 						15, /* maxStrokeLength */
 						11, /* minCharacterHeight */
@@ -126,10 +126,10 @@ int Pipeline::processImage(
 		params.modelVerifMinHeight = 15;
 	}
 
-	std::vector<Chain> chains;
-	std::vector<std::pair<Point2d, Point2d> > compBB;
-	std::vector<std::pair<CvPoint, CvPoint> > chainBB;
-	textDetector.detect(&ipl_img, params, chains, compBB, chainBB);
+	std::vector<DetectText::Chain> chains;
+	std::vector<DetectText::SWTPointPair2d > compBB;
+	std::vector<DetectText::SWTPointPair2i > chainBB;
+	DetectText::textDetection(&ipl_img, params, chains, compBB, chainBB);
 	textRecognizer.recognize(&ipl_img, params, svmModel, chains, compBB, chainBB, text);
 	vectorAtoi(bibNumbers, text);
 #endif

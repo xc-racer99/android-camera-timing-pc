@@ -137,11 +137,12 @@ TextRecognizer::~TextRecognizer(void) {
 }
 
 int TextRecognizer::recognize(IplImage *input,
-		const struct TextDetectionParams &params, std::string svmModel,
-		std::vector<Chain> &chains,
-		std::vector<std::pair<Point2d, Point2d> > &compBB,
-		std::vector<std::pair<CvPoint, CvPoint> > &chainBB,
-		std::vector<std::string>& text) {
+						const struct DetectText::TextDetectionParams params,
+						std::string svmModel,
+						std::vector<DetectText::Chain> &chains,
+						std::vector<DetectText::SWTPointPair2d > &compBB,
+						std::vector<DetectText::SWTPointPair2i > &chainBB,
+						std::vector<std::string> &text) {
 
 	// Convert to grayscale
 	IplImage * grayImage = cvCreateImage(cvGetSize(input), IPL_DEPTH_8U, 1);
