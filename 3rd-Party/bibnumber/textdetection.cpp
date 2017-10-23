@@ -44,7 +44,7 @@
 
 using namespace cv;
 
-#include "TextDetection.h"
+#include "textdetection.h"
 
 #define PI 3.14159265
 
@@ -223,6 +223,7 @@ void renderChainsWithBoxes (Mat& SWTImage,
                    std::vector<std::vector<SWTPoint2d> > & components,
                    std::vector<Chain> & chains,
                    std::vector<SWTPointPair2d > & compBB,
+                   std::vector<SWTPointPair2i > & bb,
                    Mat& output) {
     // keep track of included components
     std::vector<bool> included;
@@ -245,7 +246,6 @@ void renderChainsWithBoxes (Mat& SWTImage,
 
     std::cout << componentsRed.size() << " components after chaining" << std::endl;
     renderComponents(SWTImage, componentsRed, outTemp);
-    std::vector<SWTPointPair2i > bb;
     bb = findBoundingBoxes(components, chains, compBB, outTemp);
 
     Mat out( output.size(), CV_8UC1 );
@@ -298,10 +298,34 @@ void renderChains (Mat& SWTImage,
 }
 
 Mat textDetection (const Mat& input, bool dark_on_light) {
+    struct TextDetectionParams params = {
+            dark_on_light, /* darkOnLight */
+            15, /* maxStrokeLength */
+            11, /* minCharacterHeight */
+            100, /* maxImgWidthToTextRatio */
+            45, /* maxAngle */
+            input.rows * 10/100, /* topBorder: discard top 10% */
+            input.rows * 5/100,  /* bottomBorder: discard bottom 5% */
+            3, /* min chain len */
+            0, /* verify with SVM model up to this chain len */
+            0, /* height needs to be this large to verify with model */
+    };
+
+    std::vector<Chain> chains;
+    std::vector<SWTPointPair2d > compBB;
+    std::vector<SWTPointPair2i > chainBB;
+    return textDetection(input, params, chains, compBB, chainBB); 
+}
+
+Mat textDetection (const Mat& input,
+                   const struct TextDetectionParams params,
+                   std::vector<Chain> &chains,
+                   std::vector<SWTPointPair2d > &compBB,
+                   std::vector<SWTPointPair2i > &chainBB) {
     assert ( input.depth() == CV_8U );
     assert ( input.channels() == 3 );
 
-    std::cout << "Running textDetection with dark_on_light " << dark_on_light << std::endl;
+    std::cout << "Running textDetection with dark_on_light " << params.darkOnLight << std::endl;
 
     // Convert to grayscale
     Mat grayImage( input.size(), CV_8UC1 );
@@ -333,7 +357,7 @@ Mat textDetection (const Mat& input, bool dark_on_light) {
             *ptr++ = -1;
         }
     }
-    strokeWidthTransform ( edgeImage, gradientX, gradientY, dark_on_light, SWTImage, rays );
+    strokeWidthTransform ( edgeImage, gradientX, gradientY, params.darkOnLight, SWTImage, rays );
     SWTMedianFilter ( SWTImage, rays );
 
     Mat output2( input.size(), CV_32FC1 );
@@ -351,7 +375,6 @@ Mat textDetection (const Mat& input, bool dark_on_light) {
 
     // Filter the components
     std::vector<std::vector<SWTPoint2d> > validComponents;
-    std::vector<SWTPointPair2d > compBB;
     std::vector<Point2dFloat> compCenters;
     std::vector<float> compMedians;
     std::vector<SWTPoint2d> compDimensions;
@@ -363,7 +386,6 @@ Mat textDetection (const Mat& input, bool dark_on_light) {
     //
 
     // Make chains of components
-    std::vector<Chain> chains;
     chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB);
 
     Mat output4( input.size(), CV_8UC1 );
@@ -373,10 +395,8 @@ Mat textDetection (const Mat& input, bool dark_on_light) {
     Mat output5( input.size(), CV_8UC3 );
     cvtColor (output4, output5, CV_GRAY2RGB);
 
-
-    /*IplImage * output =
-            cvCreateImage ( input.size(), CV_8UC3 );
-    renderChainsWithBoxes ( SWTImage, validComponents, chains, compBB, output); */
+    Mat output(input.size(), CV_8UC3);
+    renderChainsWithBoxes ( SWTImage, validComponents, chains, compBB, chainBB, output);
     return output5;
 }
 

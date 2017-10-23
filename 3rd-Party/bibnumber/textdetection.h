@@ -59,10 +59,28 @@ struct Chain {
     std::vector<int> components;
 };
 
+struct TextDetectionParams {
+    bool darkOnLight;
+    int maxStrokeLength;
+    int minCharacterheight;
+    float maxImgWidthToTextRatio;
+    float maxAngle;
+    int topBorder;
+    int bottomBorder;
+    unsigned int minChainLen;
+    int modelVerifLenCrit;
+    int modelVerifMinHeight;
+};
+
 bool Point2dSort (SWTPoint2d const & lhs,
                   SWTPoint2d const & rhs);
 
 cv::Mat textDetection (const cv::Mat& input, bool dark_on_light);
+cv::Mat textDetection (const cv::Mat& input,
+                       const struct TextDetectionParams params,
+                       std::vector<Chain> &chains,
+                       std::vector<SWTPointPair2d > &compBB,
+                       std::vector<SWTPointPair2i > &chainBB);
 
 void strokeWidthTransform (const cv::Mat& edgeImage,
                            cv::Mat& gradientX,
