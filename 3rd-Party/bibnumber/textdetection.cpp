@@ -946,7 +946,7 @@ std::vector<Chain> makeChains( const Mat& colorImage,
     std::sort(chains.begin(), chains.end(), &chainSortDist);
 
     std::cerr << std::endl;
-    const float strictness = PI/6.0;
+    const float strictness = PI/10.0;
     //merge chains
     int merges = 1;
     while (merges > 0) {
