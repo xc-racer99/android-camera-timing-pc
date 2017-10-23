@@ -357,7 +357,7 @@ Mat textDetection (const Mat& input,
             *ptr++ = -1;
         }
     }
-    strokeWidthTransform ( edgeImage, gradientX, gradientY, params.darkOnLight, SWTImage, rays );
+    strokeWidthTransform ( edgeImage, gradientX, gradientY, params, SWTImage, rays );
     SWTMedianFilter ( SWTImage, rays );
 
     Mat output2( input.size(), CV_32FC1 );
@@ -386,7 +386,7 @@ Mat textDetection (const Mat& input,
     //
 
     // Make chains of components
-    chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB);
+    chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB, params.minChainLen);
 
     Mat output4( input.size(), CV_8UC1 );
     renderChains ( SWTImage, validComponents, chains, output4 );
@@ -403,7 +403,7 @@ Mat textDetection (const Mat& input,
 void strokeWidthTransform (const Mat& edgeImage,
                            Mat& gradientX,
                            Mat& gradientY,
-                           bool dark_on_light,
+                           const struct TextDetectionParams params,
                            Mat& SWTImage,
                            std::vector<Ray> & rays) {
     // First pass
@@ -429,7 +429,7 @@ void strokeWidthTransform (const Mat& edgeImage,
                 float G_y = gradientY.at<float>(row, col);
                 // normalize gradient
                 float mag = sqrt( (G_x * G_x) + (G_y * G_y) );
-                if (dark_on_light){
+                if (params.darkOnLight){
                     G_x = -G_x/mag;
                     G_y = -G_y/mag;
                 } else {
@@ -458,7 +458,7 @@ void strokeWidthTransform (const Mat& edgeImage,
                             float G_xt = gradientX.at<float>(curPixY,curPixX);
                             float G_yt = gradientY.at<float>(curPixY,curPixX);
                             mag = sqrt( (G_xt * G_xt) + (G_yt * G_yt) );
-                            if (dark_on_light) {
+                            if (params.darkOnLight) {
                                 G_xt = -G_xt / mag;
                                 G_yt = -G_yt / mag;
                             } else {
@@ -469,6 +469,9 @@ void strokeWidthTransform (const Mat& edgeImage,
 
                             if (acos(G_x * -G_xt + G_y * -G_yt) < PI/2.0 ) {
                                 float length = sqrt( ((float)r.q.x - (float)r.p.x)*((float)r.q.x - (float)r.p.x) + ((float)r.q.y - (float)r.p.y)*((float)r.q.y - (float)r.p.y));
+                                if (length > params.maxStrokeLength)
+                                    break;
+
                                 for (std::vector<SWTPoint2d>::iterator pit = points.begin(); pit != points.end(); pit++) {
                                     if (SWTImage.at<float>(pit->y, pit->x) < 0) {
                                         SWTImage.at<float>(pit->y, pit->x) = length;
@@ -860,7 +863,8 @@ std::vector<Chain> makeChains( const Mat& colorImage,
                  std::vector<Point2dFloat> & compCenters,
                  std::vector<float> & compMedians,
                  std::vector<SWTPoint2d> & compDimensions,
-                 std::vector<SWTPointPair2d > & compBB) {
+                 std::vector<SWTPointPair2d > & compBB,
+                 int minChainLength) {
     assert (compCenters.size() == components.size());
     // make vector of color averages
     std::vector<Point3dFloat> colorAverages;
@@ -1129,7 +1133,7 @@ std::vector<Chain> makeChains( const Mat& colorImage,
     std::vector<Chain> newchains;
     newchains.reserve(chains.size());
     for (std::vector<Chain>::iterator cit = chains.begin(); cit != chains.end(); cit++) {
-        if (cit->components.size() >= 3) {
+        if (cit->components.size() >= minChainLength) {
             newchains.push_back(*cit);
         }
     }

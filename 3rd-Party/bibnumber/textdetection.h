@@ -85,7 +85,7 @@ cv::Mat textDetection (const cv::Mat& input,
 void strokeWidthTransform (const cv::Mat& edgeImage,
                            cv::Mat& gradientX,
                            cv::Mat& gradientY,
-                           bool dark_on_light,
+                           const struct TextDetectionParams params,
                            cv::Mat& SWTImage,
                            std::vector<Ray> & rays);
 
@@ -115,7 +115,8 @@ std::vector<Chain> makeChains( const cv::Mat& colorImage,
                  std::vector<Point2dFloat> & compCenters,
                  std::vector<float> & compMedians,
                  std::vector<SWTPoint2d> & compDimensions,
-                 std::vector<SWTPointPair2d > & compBB);
+                 std::vector<SWTPointPair2d > & compBB,
+                 int minChainLength);
 
 }
 
