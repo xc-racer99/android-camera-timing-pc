@@ -561,21 +561,21 @@ std::vector< std::vector<SWTPoint2d> > findLegallyConnectedComponents (Mat& SWTI
                     int this_pixel = map[row * SWTImage.cols + col];
                     if (col+1 < SWTImage.cols) {
                         float right = SWTImage.at<float>(row, col+1);
-                        if (right > 0 && ((*ptr)/right <= 3.0 || right/(*ptr) <= 3.0))
+                        if (right > 0 && (*ptr)/right <= 3.0 && right/(*ptr) <= 3.0)
                             boost::add_edge(this_pixel, map.at(row * SWTImage.cols + col + 1), g);
                     }
                     if (row+1 < SWTImage.rows) {
                         if (col+1 < SWTImage.cols) {
                             float right_down = SWTImage.at<float>(row+1, col+1);
-                            if (right_down > 0 && ((*ptr)/right_down <= 3.0 || right_down/(*ptr) <= 3.0))
+                            if (right_down > 0 && (*ptr)/right_down <= 3.0 && right_down/(*ptr) <= 3.0)
                                 boost::add_edge(this_pixel, map.at((row+1) * SWTImage.cols + col + 1), g);
                         }
                         float down = SWTImage.at<float>(row+1, col);
-                        if (down > 0 && ((*ptr)/down <= 3.0 || down/(*ptr) <= 3.0))
+                        if (down > 0 && (*ptr)/down <= 3.0 && down/(*ptr) <= 3.0)
                             boost::add_edge(this_pixel, map.at((row+1) * SWTImage.cols + col), g);
                         if (col-1 >= 0) {
                             float left_down = SWTImage.at<float>(row+1, col-1);
-                            if (left_down > 0 && ((*ptr)/left_down <= 3.0 || left_down/(*ptr) <= 3.0))
+                            if (left_down > 0 && (*ptr)/left_down <= 3.0 && left_down/(*ptr) <= 3.0)
                                 boost::add_edge(this_pixel, map.at((row+1) * SWTImage.cols + col - 1), g);
                         }
                     }
@@ -638,7 +638,7 @@ findLegallyConnectedComponentsRAY (Mat& SWTImage,
                 for (std::vector<SWTPoint2d>::const_iterator it2 = it->points.begin(); it2 != it->points.end(); it2++) {
                         float currentSW = SWTImage.at<float>(it2->y, it2->x);
                         if (lastSW == 0) {}
-                        else if (lastSW/currentSW<=3.0 || currentSW/lastSW<=3.0){
+                        else if (lastSW/currentSW<=3.0 && currentSW/lastSW<=3.0){
                                 boost::add_edge(map.at(it2->y * SWTImage.cols + it2->x), map.at(lastRow * SWTImage.cols + lastCol), g);
                         }
                         lastSW = currentSW;
