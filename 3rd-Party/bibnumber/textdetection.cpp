@@ -48,6 +48,8 @@ using namespace cv;
 
 #define PI 3.14159265
 
+#define COM_MAX_ASPECT_RATIO 2.5
+
 namespace DetectText {
 
 const Scalar BLUE (255, 0, 0);
@@ -749,8 +751,8 @@ void filterComponents(Mat& SWTImage,
                     width = wtemp;
                 }
             }
-            // check if the aspect ratio is between 1/10 and 10
-            if (length/width < 1./10. || length/width > 10.) {
+            // check aspect ratio
+            if (length/width < 1./MAX_ASPECT_RATIO || length/width > MAX_ASPECT_RATIO) {
                 continue;
             }
 
