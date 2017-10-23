@@ -752,7 +752,7 @@ void filterComponents(Mat& SWTImage,
                 }
             }
             // check aspect ratio
-            if (length/width < 1./MAX_ASPECT_RATIO || length/width > MAX_ASPECT_RATIO) {
+            if (length/width < 1./COM_MAX_ASPECT_RATIO || length/width > COM_MAX_ASPECT_RATIO) {
                 continue;
             }
 
