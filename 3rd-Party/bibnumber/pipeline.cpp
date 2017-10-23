@@ -103,7 +103,7 @@ int Pipeline::processImage(
 #else
 	std::vector<std::string> text;
 	struct DetectText::TextDetectionParams params = {
-						1, /* darkOnLight */
+						true, /* darkOnLight */
 						15, /* maxStrokeLength */
 						11, /* minCharacterHeight */
 						100, /* maxImgWidthToTextRatio */
@@ -113,6 +113,7 @@ int Pipeline::processImage(
 						3, /* min chain len */
 						0, /* verify with SVM model up to this chain len */
 						0, /* height needs to be this large to verify with model */
+						false, /* use gheinrich's chain code */
 				};
 
 	if (!svmModel.empty())

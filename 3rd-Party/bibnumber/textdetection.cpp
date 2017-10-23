@@ -49,12 +49,23 @@ using namespace cv;
 #define PI 3.14159265
 
 #define COM_MAX_ASPECT_RATIO 2.5
+#define COM_MAX_DIM_RATIO 2.0
+#define COM_MAX_DIST_RATIO 2.0
+#define COM_MAX_MEDIAN_RATIO 3.0
 
 namespace DetectText {
 
 const Scalar BLUE (255, 0, 0);
 const Scalar GREEN(0, 255, 0);
 const Scalar RED  (0, 0, 255);
+
+static inline int square(int x) {
+    return x * x;
+}
+
+static inline bool ratio_within(float ratio, float max_ratio) {
+    return ((ratio < max_ratio) && (ratio > 1 / max_ratio));
+}
 
 std::vector<SWTPointPair2i > findBoundingBoxes( std::vector<std::vector<SWTPoint2d> > & components,
                                                            std::vector<Chain> & chains,
@@ -311,6 +322,7 @@ Mat textDetection (Mat& input, bool dark_on_light) {
             3, /* min chain len */
             0, /* verify with SVM model up to this chain len */
             0, /* height needs to be this large to verify with model */
+            false, /* use gheinrich's chain code */
     };
 
     std::vector<Chain> chains;
@@ -393,7 +405,7 @@ Mat textDetection (Mat& input,
     //
 
     // Make chains of components
-    chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB, params.minChainLen);
+    chains = makeChains(input, validComponents, compCenters, compMedians, compDimensions, compBB, params);
 
     Mat output4( input.size(), CV_8UC1 );
     renderChains ( SWTImage, validComponents, chains, output4 );
@@ -890,7 +902,7 @@ std::vector<Chain> makeChains( const Mat& colorImage,
                  std::vector<float> & compMedians,
                  std::vector<SWTPoint2d> & compDimensions,
                  std::vector<SWTPointPair2d > & compBB,
-                 int minChainLength) {
+                 const struct TextDetectionParams params) {
     assert (compCenters.size() == components.size());
     // make vector of color averages
     std::vector<Point3dFloat> colorAverages;
@@ -918,45 +930,104 @@ std::vector<Chain> makeChains( const Mat& colorImage,
     for ( unsigned int i = 0; i < components.size(); i++ ) {
         for ( unsigned int j = i + 1; j < components.size(); j++ ) {
             // TODO add color metric
-            if ( (compMedians[i]/compMedians[j] <= 2.0 || compMedians[j]/compMedians[i] <= 2.0) &&
-                 (compDimensions[i].y/compDimensions[j].y <= 2.0 || compDimensions[j].y/compDimensions[i].y <= 2.0)) {
-                float dist = (compCenters[i].x - compCenters[j].x) * (compCenters[i].x - compCenters[j].x) +
-                             (compCenters[i].y - compCenters[j].y) * (compCenters[i].y - compCenters[j].y);
-                float colorDist = (colorAverages[i].x - colorAverages[j].x) * (colorAverages[i].x - colorAverages[j].x) +
-                                  (colorAverages[i].y - colorAverages[j].y) * (colorAverages[i].y - colorAverages[j].y) +
-                                  (colorAverages[i].z - colorAverages[j].z) * (colorAverages[i].z - colorAverages[j].z);
-                if (dist < 9*(float)(std::max(std::min(compDimensions[i].x,compDimensions[i].y),std::min(compDimensions[j].x,compDimensions[j].y)))
-                    *(float)(std::max(std::min(compDimensions[i].x,compDimensions[i].y),std::min(compDimensions[j].x,compDimensions[j].y)))
-                    && colorDist < 1600) {
-                    Chain c;
-                    c.p = i;
-                    c.q = j;
-                    std::vector<int> comps;
-                    comps.push_back(c.p);
-                    comps.push_back(c.q);
-                    c.components = comps;
-                    c.dist = dist;
-                    float d_x = (compCenters[i].x - compCenters[j].x);
-                    float d_y = (compCenters[i].y - compCenters[j].y);
-                    /*
-                    float d_x = (compBB[i].first.x - compBB[j].second.x);
-                    float d_y = (compBB[i].second.y - compBB[j].second.y);
-                    */
-                    float mag = sqrt(d_x*d_x + d_y*d_y);
-                    d_x = d_x / mag;
-                    d_y = d_y / mag;
-                    Point2dFloat dir;
-                    dir.x = d_x;
-                    dir.y = d_y;
-                    c.direction = dir;
-                    chains.push_back(c);
+            if(params.useOriginalChainCode) {
+                if ( (compMedians[i]/compMedians[j] <= 2.0 || compMedians[j]/compMedians[i] <= 2.0) &&
+                     (compDimensions[i].y/compDimensions[j].y <= 2.0 || compDimensions[j].y/compDimensions[i].y <= 2.0)) {
+                    float dist = (compCenters[i].x - compCenters[j].x) * (compCenters[i].x - compCenters[j].x) +
+                                 (compCenters[i].y - compCenters[j].y) * (compCenters[i].y - compCenters[j].y);
+                    float colorDist = (colorAverages[i].x - colorAverages[j].x) * (colorAverages[i].x - colorAverages[j].x) +
+                                      (colorAverages[i].y - colorAverages[j].y) * (colorAverages[i].y - colorAverages[j].y) +
+                                      (colorAverages[i].z - colorAverages[j].z) * (colorAverages[i].z - colorAverages[j].z);
+                    if (dist < 9*(float)(std::max(std::min(compDimensions[i].x,compDimensions[i].y),std::min(compDimensions[j].x,compDimensions[j].y)))
+                        *(float)(std::max(std::min(compDimensions[i].x,compDimensions[i].y),std::min(compDimensions[j].x,compDimensions[j].y)))
+                        && colorDist < 1600) {
+                        Chain c;
+                        c.p = i;
+                        c.q = j;
+                        std::vector<int> comps;
+                        comps.push_back(c.p);
+                        comps.push_back(c.q);
+                        c.components = comps;
+                        c.dist = dist;
+                        float d_x = (compCenters[i].x - compCenters[j].x);
+                        float d_y = (compCenters[i].y - compCenters[j].y);
+                        /*
+                        float d_x = (compBB[i].first.x - compBB[j].second.x);
+                        float d_y = (compBB[i].second.y - compBB[j].second.y);
+                        */
+                        float mag = sqrt(d_x*d_x + d_y*d_y);
+                        d_x = d_x / mag;
+                        d_y = d_y / mag;
+                        Point2dFloat dir;
+                        dir.x = d_x;
+                        dir.y = d_y;
+                        c.direction = dir;
+                        chains.push_back(c);
 
-                    /*std::cerr << c.p << " " << c.q << std::endl;
-                    std::cerr << c.direction.x << " " << c.direction.y << std::endl;
-                    std::cerr << compCenters[c.p].x << " " << compCenters[c.p].y << std::endl;
-                    std::cerr << compCenters[c.q].x << " " << compCenters[c.q].y << std::endl;
-                    std::cerr << std::endl;
-                    std::cerr << colorDist << std::endl; */
+                        /*std::cerr << c.p << " " << c.q << std::endl;
+                        std::cerr << c.direction.x << " " << c.direction.y << std::endl;
+                        std::cerr << compCenters[c.p].x << " " << compCenters[c.p].y << std::endl;
+                        std::cerr << compCenters[c.q].x << " " << compCenters[c.q].y << std::endl;
+                        std::cerr << std::endl;
+                        std::cerr << colorDist << std::endl; */
+                    }
+                }
+            } else {
+                float compMediansRatio = compMedians[i] / compMedians[j];
+                float compDimRatioY = ((float) compDimensions[i].y)
+                        / compDimensions[j].y;
+                float compDimRatioX = ((float) compDimensions[i].x)
+                        / compDimensions[j].x;
+                float dist = square(compCenters[i].x - compCenters[j].x)
+                        + square(compCenters[i].y - compCenters[j].y);
+                float colorDist = square(colorAverages[i].x - colorAverages[j].x)
+                        + square(colorAverages[i].y - colorAverages[j].y)
+                        + square(colorAverages[i].z - colorAverages[j].z);
+#if 0
+                float maxDim = (float) square(
+                        std::max(std::min(compDimensions[i].x, compDimensions[i].y),
+                                std::min(compDimensions[j].x,
+                                        compDimensions[j].y)));
+#else
+                float maxDim = (float) square(
+                                    std::min(compDimensions[i].y,compDimensions[j].y));
+
+#endif
+                if (ratio_within(compMediansRatio, COM_MAX_MEDIAN_RATIO)
+                        && (ratio_within(compDimRatioY, COM_MAX_DIM_RATIO))
+                        && (ratio_within(compDimRatioX, COM_MAX_DIM_RATIO))) {
+
+                    if (dist / maxDim < COM_MAX_DIST_RATIO /*&& colorDist < 6000*/) {
+                        Chain c;
+                        c.p = i;
+                        c.q = j;
+                        std::vector<int> comps;
+                        comps.push_back(c.p);
+                        comps.push_back(c.q);
+                        c.components = comps;
+                        c.dist = dist;
+                        float d_x = (compCenters[i].x - compCenters[j].x);
+                        float d_y = (compCenters[i].y - compCenters[j].y);
+                        /*
+                        float d_x = (compBB[i].first.x - compBB[j].second.x);
+                        float d_y = (compBB[i].second.y - compBB[j].second.y);
+                        */
+                        float mag = sqrt(d_x*d_x + d_y*d_y);
+                        d_x = d_x / mag;
+                        d_y = d_y / mag;
+                        Point2dFloat dir;
+                        dir.x = d_x;
+                        dir.y = d_y;
+                        c.direction = dir;
+                        chains.push_back(c);
+
+                        /*std::cerr << c.p << " " << c.q << std::endl;
+                        std::cerr << c.direction.x << " " << c.direction.y << std::endl;
+                        std::cerr << compCenters[c.p].x << " " << compCenters[c.p].y << std::endl;
+                        std::cerr << compCenters[c.q].x << " " << compCenters[c.q].y << std::endl;
+                        std::cerr << std::endl;
+                        std::cerr << colorDist << std::endl; */
+                    }
                 }
             }
         }
@@ -1174,7 +1245,7 @@ std::vector<Chain> makeChains( const Mat& colorImage,
     for (int i=0,iend=chains.size(); i<iend; i++)
     {
         /* only add chains longer than minimum size */
-        if (chains[i].components.size() < minChainLength) {
+        if (chains[i].components.size() < params.minChainLen) {
             std::cout << "Reject chain " << i << " on minimum chain length" << std::endl;
             break;
         }

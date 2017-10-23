@@ -70,6 +70,7 @@ struct TextDetectionParams {
     unsigned int minChainLen;
     int modelVerifLenCrit;
     int modelVerifMinHeight;
+    bool useOriginalChainCode;
 };
 
 bool Point2dSort (SWTPoint2d const & lhs,
@@ -116,7 +117,7 @@ std::vector<Chain> makeChains( const cv::Mat& colorImage,
                  std::vector<float> & compMedians,
                  std::vector<SWTPoint2d> & compDimensions,
                  std::vector<SWTPointPair2d > & compBB,
-                 int minChainLength);
+                 const struct TextDetectionParams params);
 
 }
 
