@@ -136,7 +136,7 @@ TextRecognizer::~TextRecognizer(void) {
 	tess.End();
 }
 
-int TextRecognizer::recognize(IplImage *input,
+int TextRecognizer::recognize(cv::Mat input,
 						const struct DetectText::TextDetectionParams params,
 						std::string svmModel,
 						std::vector<DetectText::Chain> &chains,
@@ -145,8 +145,8 @@ int TextRecognizer::recognize(IplImage *input,
 						std::vector<std::string> &text) {
 
 	// Convert to grayscale
-	IplImage * grayImage = cvCreateImage(cvGetSize(input), IPL_DEPTH_8U, 1);
-	cvCvtColor(input, grayImage, CV_RGB2GRAY);
+	cv::Mat grayImage(input.size(), CV_8UC1);
+	cv::cvtColor(input, grayImage, CV_RGB2GRAY);
 
 	for (unsigned int i = 0; i < chainBB.size(); i++) {
 		cv::Point center = cv::Point(
@@ -155,9 +155,9 @@ int TextRecognizer::recognize(IplImage *input,
 
 		/* work out if total width of chain is large enough */
 		if (chainBB[i].second.x - chainBB[i].first.x
-				< input->width / params.maxImgWidthToTextRatio) {
+				< input.cols / params.maxImgWidthToTextRatio) {
 			LOGL(LOG_TXT_ORIENT,
-					"Reject chain #" << i << " width=" << (chainBB[i].second.x - chainBB[i].first.x) << "<" << (input->width / params.maxImgWidthToTextRatio));
+					"Reject chain #" << i << " width=" << (chainBB[i].second.x - chainBB[i].first.x) << "<" << (input.cols / params.maxImgWidthToTextRatio));
 			continue;
 		}
 
@@ -254,7 +254,7 @@ int TextRecognizer::recognize(IplImage *input,
 		cv::transform(compCoords, compCoords, rotMatrix);
 		/* find bounding box of rotated components */
 		cv::Rect roi = getBoundingBox(compCoords,
-				cv::Size(input->width, input->height));
+				cv::Size(input.cols, input.rows));
 		/* ROI area can be null if outside of clipping area */
 		if ((roi.width == 0) || (roi.height == 0))
 			continue;
@@ -438,10 +438,7 @@ int TextRecognizer::recognize(IplImage *input,
 		free(out);
 	}
 
-	cvReleaseImage(&grayImage);
-
 	return 0;
-
 }
 
 } /* namespace textrecognition */

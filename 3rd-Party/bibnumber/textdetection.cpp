@@ -297,7 +297,7 @@ void renderChains (Mat& SWTImage,
 
 }
 
-Mat textDetection (const Mat& input, bool dark_on_light) {
+Mat textDetection (Mat& input, bool dark_on_light) {
     struct TextDetectionParams params = {
             dark_on_light, /* darkOnLight */
             15, /* maxStrokeLength */
@@ -317,7 +317,7 @@ Mat textDetection (const Mat& input, bool dark_on_light) {
     return textDetection(input, params, chains, compBB, chainBB); 
 }
 
-Mat textDetection (const Mat& input,
+Mat textDetection (Mat& input,
                    const struct TextDetectionParams params,
                    std::vector<Chain> &chains,
                    std::vector<SWTPointPair2d > &compBB,
@@ -326,6 +326,11 @@ Mat textDetection (const Mat& input,
     assert ( input.channels() == 3 );
 
     std::cout << "Running textDetection with dark_on_light " << params.darkOnLight << std::endl;
+
+    // Remove borders according to params
+    Point p1(0, params.topBorder);
+    Point p2(input.cols, input.rows-params.bottomBorder);
+    input = input(Rect(p1, p2));
 
     // Convert to grayscale
     Mat grayImage( input.size(), CV_8UC1 );

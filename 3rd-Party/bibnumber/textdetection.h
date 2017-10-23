@@ -75,8 +75,8 @@ struct TextDetectionParams {
 bool Point2dSort (SWTPoint2d const & lhs,
                   SWTPoint2d const & rhs);
 
-cv::Mat textDetection (const cv::Mat& input, bool dark_on_light);
-cv::Mat textDetection (const cv::Mat& input,
+cv::Mat textDetection (cv::Mat& input, bool dark_on_light);
+cv::Mat textDetection (cv::Mat& input,
                        const struct TextDetectionParams params,
                        std::vector<Chain> &chains,
                        std::vector<SWTPointPair2d > &compBB,

@@ -101,7 +101,6 @@ int Pipeline::processImage(
 		}
 	}
 #else
-	IplImage ipl_img = img;
 	std::vector<std::string> text;
 	struct DetectText::TextDetectionParams params = {
 						1, /* darkOnLight */
@@ -129,8 +128,8 @@ int Pipeline::processImage(
 	std::vector<DetectText::Chain> chains;
 	std::vector<DetectText::SWTPointPair2d > compBB;
 	std::vector<DetectText::SWTPointPair2i > chainBB;
-	DetectText::textDetection(&ipl_img, params, chains, compBB, chainBB);
-	textRecognizer.recognize(&ipl_img, params, svmModel, chains, compBB, chainBB, text);
+	DetectText::textDetection(img, params, chains, compBB, chainBB);
+	textRecognizer.recognize(img, params, svmModel, chains, compBB, chainBB, text);
 	vectorAtoi(bibNumbers, text);
 #endif
 	cv::imwrite("face-detection.png", img);

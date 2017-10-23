@@ -13,7 +13,7 @@ namespace textrecognition
 	public:
 		TextRecognizer(void);
 		~TextRecognizer(void);
-		int recognize (IplImage *input,
+		int recognize (cv::Mat input,
 	   	               const struct DetectText::TextDetectionParams params,
 	   	               std::string svmModel,
 		               std::vector<DetectText::Chain> &chains,
