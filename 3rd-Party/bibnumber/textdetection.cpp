@@ -686,7 +686,7 @@ void componentStats(Mat& SWTImage,
         median = temp[temp.size()/2];
 }
 
-
+#define NO_FILTER
 void filterComponents(Mat& SWTImage,
                       std::vector<std::vector<SWTPoint2d> > & components,
                       std::vector<std::vector<SWTPoint2d> > & validComponents,
@@ -706,12 +706,12 @@ void filterComponents(Mat& SWTImage,
             float mean, variance, median;
             int minx, miny, maxx, maxy;
             componentStats(SWTImage, (*it), mean, variance, median, minx, miny, maxx, maxy);
-
+#ifndef NO_FILTER
             // check if variance is less than half the mean
             if (variance > 0.5 * mean) {
                  continue;
             }
-
+#endif
             float length = (float)(maxx-minx+1);
             float width = (float)(maxy-miny+1);
 
