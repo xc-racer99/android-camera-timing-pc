@@ -9,6 +9,8 @@
 #include <QScrollBar>
 #include <QWidget>
 
+#include "ocrpipeline.h"
+
 class TimingCamera : public QObject
 {
     Q_OBJECT
@@ -50,6 +52,8 @@ private:
     bool fromBack;
     float scaleFactor;
 
+    OcrPipeline *pipeline;
+
     void adjustScrollBar(QScrollBar *scrollBar, double factor);
     void scaleImage(double factor);
     void startBackgroundThread();
@@ -64,7 +68,6 @@ private slots:
     void addNewImage(QString fileName, int bibNumber);
     void changeSettings();
     void reconnectToServer();
-    void runOcr(QString fileName);
     void setConnectionStatus(QString status);
     void zoomIn();
     void zoomOut();

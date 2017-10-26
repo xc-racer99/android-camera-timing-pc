@@ -14,7 +14,7 @@ include_directories(${Boost_INCLUDE_DIR})
 # Tesseract
 find_library(Tesseract_LIBRARY NAMES libtesseract tesseract tesseract-3 libtesseract-3)
 
-# Add the crc library
+# Add the library
 add_library(bibnumber
 	SHARED
 	facedetection.cpp

@@ -34,7 +34,6 @@
 #include <QTimer>
 
 #include "mytcpsocket.h"
-#include "ocrpipeline.h"
 
 #include "timingcamera.h"
 
@@ -133,6 +132,19 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
         entries.append(Entry(initialFileInfo.at(i).absoluteFilePath(), 0, timestamp));
     }
 
+    // Start the OCR
+    pipeline = new OcrPipeline(directory, fromBack);
+    QThread *thread = new QThread();
+    pipeline->moveToThread(thread);
+
+    connect(thread, SIGNAL(started()), pipeline, SLOT(process()));
+    connect(pipeline, SIGNAL(finished()), thread, SLOT(quit()));
+    connect(pipeline, SIGNAL(finished()), pipeline, SLOT(deleteLater()));
+    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+    connect(pipeline, SIGNAL(newImage(QString,int)), this, SLOT(addNewImage(QString,int)));
+
+    thread->start();
+
     // Start the image saving thread
     startBackgroundThread();
 }
@@ -141,6 +153,7 @@ TimingCamera::~TimingCamera() {
     delete ipAddress;
     delete statusBox;
     delete imageHolder;
+    pipeline->stopThread();
 }
 
 void TimingCamera::addBlankImage(qint64 time) {
@@ -151,6 +164,7 @@ void TimingCamera::addBlankImage(qint64 time) {
 
 void TimingCamera::setAtBack(bool fromBehind) {
     fromBack = fromBehind;
+    pipeline->setFromBehind(fromBehind);
 }
 
 void TimingCamera::setTimestampOffset(qint64 offset) {
@@ -235,7 +249,7 @@ void TimingCamera::startBackgroundThread() {
 
     // Connect signals and slots
     connect(socket, SIGNAL(serverStatus(QString)), this, SLOT(setConnectionStatus(QString)));
-    connect(socket, SIGNAL(newImage(QString)), this, SLOT(runOcr(QString)));
+    connect(socket, SIGNAL(newImage(QString)), pipeline, SLOT(addImage(QString)));
     connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
     connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
     connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
@@ -276,18 +290,6 @@ void TimingCamera::changeImage(int index) {
     scaleFactor = 1.0;
 
     actualImage->resize(500, newHeight);
-}
-
-void TimingCamera::runOcr(QString fileName) {
-    OcrPipeline *pipeline = new OcrPipeline(fileName, directory, fromBack);
-    QThread *thread = new QThread();
-    pipeline->moveToThread(thread);
-
-    connect(thread, &QThread::finished, pipeline, &QObject::deleteLater);
-    connect(thread, SIGNAL(started()), pipeline, SLOT(process()));
-    connect(pipeline, SIGNAL(newImage(QString,int)), this, SLOT(addNewImage(QString,int)));
-
-    thread->start();
 }
 
 void TimingCamera::addNewImage(QString fileName, int bibNumber) {
