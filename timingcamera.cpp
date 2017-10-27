@@ -299,18 +299,34 @@ void TimingCamera::addNewImage(QString fileName, int bibNumber) {
     bool ok;
     qint64 timestamp = rawTimestamp.toLongLong(&ok);
     if(ok) {
-        // Check the last entry and see if it was a dummy
-        QFileInfo tempFile = QFile(entries.back().file);
-        qint64 lastActualTimestamp = tempFile.baseName().toLongLong();
-        if(entries.back().timestamp == 0 && lastActualTimestamp - timestamp < 2000 && lastActualTimestamp - timestamp > -2000)
-            entries.replace(entries.length() - 1, Entry(fileName, bibNumber, timestamp + timeOffset));
-        else
-            entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
-    } else
+        // Check through previous dummy entries with timestamps
+        for(int i = entries.length() - 1; i >= 0; i--) {
+            if(entries.at(i).timestamp != 0) {
+                // Not a dummy entry, just add it
+                entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
+                break;
+            }
+            QFileInfo tempFile = QFile(entries.at(i).file);
+            qint64 lastActualTimestamp = tempFile.baseName().toLongLong();
+            if(abs(lastActualTimestamp - timestamp) < 750) {
+                // We're with 3/4s on either side of a dummy timestamp, assume this is it
+                entries.replace(i, Entry(fileName, bibNumber, timestamp + timeOffset));
+                break;
+            } else if(lastActualTimestamp - timestamp > 750) {
+                // Still potentially an entry before, continue going backwards
+                continue;
+            } else {
+                // Previous timestamp was a dummy, but our current timestamp is at least 3/4s greater than that, so we missed an entry
+                entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
+                break;
+            }
+        }
+    } else {
+        qDebug("Error: Tried to add an image with no valid timestamp");
         entries.append(Entry(fileName, bibNumber, 0));
+    }
 
-    // Create a delay of 1s to hopefully give time for the other thread(s) to finish if they're still going
-    QTimer::singleShot(1000, this, SIGNAL(newImage()));
+    emit newImage();
 }
 
 void TimingCamera::checkEntries(int numEntries, qint64 timestamp) {
