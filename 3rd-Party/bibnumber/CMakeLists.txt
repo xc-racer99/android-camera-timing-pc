@@ -17,7 +17,6 @@ find_library(Tesseract_LIBRARY NAMES libtesseract tesseract tesseract-3 libtesse
 # Add the library
 add_library(bibnumber
 	SHARED
-	facedetection.cpp
 	pipeline.cpp
 	log.cpp
 	textdetection.cpp

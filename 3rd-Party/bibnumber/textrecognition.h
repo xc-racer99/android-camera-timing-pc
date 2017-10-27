@@ -13,7 +13,6 @@ namespace textrecognition
 	public:
 		TextRecognizer(void);
 		~TextRecognizer(void);
-		void setOutputDirectory(std::string dir);
 		int recognize (IplImage *input,
 	   	               const struct TextDetectionParams &params,
 	   	               std::string svmModel,
@@ -25,7 +24,6 @@ namespace textrecognition
 		tesseract::TessBaseAPI tess;
 		int dsid; /* digit sequence id */
 		int bsid; /* bib sequence id */
-		std::string directory; /* dir for created images */
 	};
 
 }

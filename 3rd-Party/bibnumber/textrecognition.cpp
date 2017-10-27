@@ -5,10 +5,8 @@
 #include <tesseract/genericvector.h>
 
 #include <opencv/cv.h>
-#include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
 #include <opencv2/ml/ml.hpp>
-#include <opencv2/core/version.hpp>
 
 #include "train.h"
 
@@ -131,17 +129,11 @@ TextRecognizer::TextRecognizer() {
 	/* initialize sequence ids */
 	bsid = 0;
 	dsid = 0;
-
-	directory = "";
 }
 
 TextRecognizer::~TextRecognizer(void) {
 	tess.Clear();
 	tess.End();
-}
-
-void TextRecognizer::setOutputDirectory(std::string dir) {
-	directory = dir;
 }
 
 int TextRecognizer::recognize(IplImage *input,
@@ -201,13 +193,8 @@ int TextRecognizer::recognize(IplImage *input,
 				"Chain #" << i << " Angle: " << theta_deg << " degrees");
 
 		/* create copy of input image including only the selected components */
-#if CV_MAJOR_VERSION == 2
 		cv::Mat inputMat = cv::Mat(input);
 		cv::Mat grayMat = cv::Mat(grayImage);
-#elif CV_MAJOR_VERSION == 3
-		cv::Mat inputMat = cv::cvarrToMat(input);
-		cv::Mat grayMat = cv::cvarrToMat(grayImage);
-#endif
 		cv::Mat componentsImg = cv::Mat::zeros(grayMat.rows, grayMat.cols,
 				grayMat.type());
 
@@ -246,20 +233,20 @@ int TextRecognizer::recognize(IplImage *input,
 			std::cout << "mu02=" << mu.mu02 << " mu11=" << mu.mu11 << " skew="
 			<< mu.mu11 / mu.mu02 << std::endl;
 #endif
-			cv::imwrite(directory + "thresholded.png", thresholded);
+			cv::imwrite("thresholded.png", thresholded);
 
 			cv::threshold(componentRoi, componentsImg(roi), 0 // the value doesn't matter for Otsu thresholding
 					, 255 // we could choose any non-zero value. 255 (white) makes it easy to see the binary image
 					, cv::THRESH_OTSU | cv::THRESH_BINARY_INV);
 		}
-		cv::imwrite(directory + "bib-components.png", componentsImg);
+		cv::imwrite("bib-components.png", componentsImg);
 
 		cv::Mat rotMatrix = cv::getRotationMatrix2D(center, theta_deg, 1.0);
 
 		cv::Mat rotatedMat = cv::Mat::zeros(grayMat.rows, grayMat.cols,
 				grayMat.type());
 		cv::warpAffine(componentsImg, rotatedMat, rotMatrix, rotatedMat.size());
-		cv::imwrite(directory + "bib-rotated.png", rotatedMat);
+		cv::imwrite("bib-rotated.png", rotatedMat);
 
 		/* rotate each component coordinates */
 		const int border = 3;
@@ -291,7 +278,7 @@ int TextRecognizer::recognize(IplImage *input,
 		cv::Mat elem = cv::getStructuringElement(cv::MORPH_ELLIPSE,
 				cv::Size(2 * s + 1, 2 * s + 1), cv::Point(s, s));
 		cv::erode(mat, mat, elem);
-		cv::imwrite(directory + "bib-tess-input.png", mat);
+		cv::imwrite("bib-tess-input.png", mat);
 
 		// Pass it to Tesseract API
 		tess.SetImage((uchar*) mat.data, mat.cols, mat.rows, 1, mat.step1());
@@ -349,11 +336,8 @@ int TextRecognizer::recognize(IplImage *input,
 					}
 
 					/* if we have an SVM Model, predict */
-#if CV_MAJOR_VERSION == 2
+
 					CvSVM svm;
-#elif CV_MAJOR_VERSION == 3
-					cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
-#endif
 					cv::HOGDescriptor hog(cv::Size(128, 64), /* windows size */
 					cv::Size(16, 16), /* block size */
 					cv::Size(8, 8), /* block stride */
@@ -368,13 +352,8 @@ int TextRecognizer::recognize(IplImage *input,
 					hog.compute(resizedMat, descriptor);
 
 					/* load SVM model */
-#if CV_MAJOR_VERSION == 2
 					svm.load(svmModel.c_str());
 					float prediction = svm.predict(cv::Mat(descriptor).t());
-#else
-					svm->load(svmModel.c_str());
-					float prediction = svm->predict(cv::Mat(descriptor).t());
-#endif
 					LOGL(LOG_SVM, "Prediction=" << prediction);
 					if (prediction < 0.5) {
 						LOGL(LOG_TEXTREC,
@@ -418,7 +397,7 @@ int TextRecognizer::recognize(IplImage *input,
 							if (dist < min) {
 								min = dist;
 								minOffset = offset;
-								cv::imwrite(directory + "symm-max.png", straightMat);
+								cv::imwrite("symm-max.png", straightMat);
 								cv::Mat visualImage;
 							}
 						}
@@ -438,10 +417,10 @@ int TextRecognizer::recognize(IplImage *input,
 
 				/* save for training only if orientation is ~horizontal */
 				if (abs(theta_deg) < 7) {
-					char *filename = (char *)malloc(18 * sizeof(char *));
-					sprintf(filename, "bib-%05d-%04d.png", this->bsid++,
+					char *filename;
+					asprintf(&filename, "bib-%05d-%04d.png", this->bsid++,
 							atoi(out));
-					cv::imwrite(directory + filename, bibMat);
+					cv::imwrite(filename, bibMat);
 					free(filename);
 				}
 

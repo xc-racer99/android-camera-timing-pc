@@ -82,7 +82,7 @@ static int processSingleImage(
 	}
 
 	/* process image */
-	res = pipeline.processImage(image, svmModel, 1, bibNumbers);
+	res = pipeline.processImage(image, svmModel, bibNumbers);
 	if (res < 0) {
 		std::cerr << "ERROR: Could not process image" << std::endl;
 		return -1;
@@ -232,7 +232,7 @@ int process(std::string inputName, std::string svmModel) {
 				<< outPath.string() << std::endl;
 
 		std::ofstream outFile;
-		outFile.open((const char*)outPath.c_str());
+		outFile.open(outPath.c_str());
 
 		/* set log mask to minimum */
 		biblog::set_log_mask(LOG_NONE);

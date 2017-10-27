@@ -117,14 +117,11 @@ class TextDetector {
 public:
 	TextDetector(void);
 	~TextDetector(void);
-	void setOutputDirectory(std::string dir);
 	void detect (IplImage *    float_input,
 	                    const struct TextDetectionParams &params,
 	                    std::vector<Chain> &chains,
 	                    std::vector<std::pair<Point2d, Point2d> > &compBB,
 	                    std::vector<std::pair<CvPoint, CvPoint> > &chainBB);
-private:
-		std::string directory; /* dir for created images */
 };
 
 }

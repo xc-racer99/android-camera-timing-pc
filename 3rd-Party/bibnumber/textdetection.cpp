@@ -27,20 +27,15 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include <opencv/cxcore.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include <opencv2/core/version.hpp>
+#include <opencv/cxcore.h>
 #include <math.h>
 #include <time.h>
 #include <utility>
 #include <algorithm>
 #include <vector>
 #include "textdetection.h"
-
-#if CV_MAJOR_VERSION == 3
-#include <opencv2/imgproc.hpp>
-#endif
 
 #include "log.h"
 
@@ -229,13 +224,9 @@ void renderComponentsWithBoxes(IplImage * SWTImage,
 		else
 			c = cvScalar(0, 0, 255);
 
-		char *txt = (char*) malloc(((bb.size() / 10) + 1) * sizeof(char));
-		sprintf(txt, "%d", count);
-#if CV_MAJOR_VERSION == 2
+		char *txt;
+		asprintf(&txt, "%d", count);
 		cv::Mat tmp_mat = cv::Mat(output);
-#elif CV_MAJOR_VERSION == 3
-		cv::Mat tmp_mat = cv::cvarrToMat(output);
-#endif
 		cv::rectangle(tmp_mat, it->first, it->second, c);
 		cv::putText(tmp_mat, txt, it->first, cv::FONT_HERSHEY_SIMPLEX, 0.3, c);
 		free(txt);
@@ -316,15 +307,10 @@ namespace textdetection {
 
 TextDetector::TextDetector()
 {
-	directory = "";
 }
 
 TextDetector::~TextDetector(void)
 {
-}
-
-void TextDetector::setOutputDirectory(std::string dir) {
-	directory = dir;
 }
 
 void TextDetector::detect(IplImage * input,
@@ -342,7 +328,7 @@ void TextDetector::detect(IplImage * input,
 	double threshold_high = 320;
 	IplImage * edgeImage = cvCreateImage(cvGetSize(input), IPL_DEPTH_8U, 1);
 	cvCanny(grayImage, edgeImage, threshold_low, threshold_high, 3);
-	cvSaveImage((directory + "canny.png").c_str(), edgeImage);
+	cvSaveImage("canny.png", edgeImage);
 
 	// Create gradient X, gradient Y
 	IplImage * gaussianImage = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F,
@@ -368,16 +354,16 @@ void TextDetector::detect(IplImage * input,
 	}
 	strokeWidthTransform(edgeImage, gradientX, gradientY, params, SWTImage,
 			rays);
-	cvSaveImage((directory + "SWT_0.png").c_str(), SWTImage);
+	cvSaveImage("SWT_0.png", SWTImage);
 	SWTMedianFilter(SWTImage, rays);
-	cvSaveImage((directory + "SWT_1.png").c_str(), SWTImage);
+	cvSaveImage("SWT_1.png", SWTImage);
 
 	IplImage * output2 = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F, 1);
 	normalizeImage(SWTImage, output2);
-	cvSaveImage((directory + "SWT_2.png").c_str(), output2);
+	cvSaveImage("SWT_2.png", output2);
 	IplImage * saveSWT = cvCreateImage(cvGetSize(input), IPL_DEPTH_8U, 1);
 	cvConvertScale(output2, saveSWT, 255, 0);
-	cvSaveImage((directory + "SWT.png").c_str(), saveSWT);
+	cvSaveImage("SWT.png", saveSWT);
 	cvReleaseImage(&output2);
 	cvReleaseImage(&saveSWT);
 
@@ -397,7 +383,7 @@ void TextDetector::detect(IplImage * input,
 
 	IplImage * output3 = cvCreateImage(cvGetSize(input), 8U, 3);
 	renderComponentsWithBoxes(SWTImage, validComponents, compBB, output3);
-	cvSaveImage((directory + "components.png").c_str(), output3);
+	cvSaveImage("components.png", output3);
 	cvReleaseImage ( &output3 );
 
 	// Make chains of components
@@ -406,7 +392,7 @@ void TextDetector::detect(IplImage * input,
 
 	IplImage * output = cvCreateImage(cvGetSize(grayImage), IPL_DEPTH_8U, 3);
 	renderChainsWithBoxes(SWTImage, validComponents, chains, compBB, chainBB, output);
-	cvSaveImage((directory + "text-boxes.png").c_str(), output);
+	cvSaveImage("text-boxes.png", output);
 
 
 

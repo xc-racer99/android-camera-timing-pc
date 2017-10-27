@@ -397,8 +397,8 @@ int process(std::string trainDir, std::string inputDir) {
 		float prediction = svm.predict(cv::Mat(descriptor).t());
 		std::cout << i << " prediction=" << prediction << std::endl;
 		if (prediction > 0.5) {
-			char filename[end/10 + 1 + 14];
-            sprintf(filename, "positive-%d.png", i);
+			char *filename;
+			asprintf(&filename, "positive-%d.png", i);
 			cv::imwrite(filename, imageMat(roi));
 			free(filename);
 		}
@@ -425,7 +425,8 @@ int process(std::string trainDir, std::string inputDir) {
 	{
 		std::cout << "Opening full image " << fullImgFiles[0].string()
 				<< std::endl;
-		cv::Mat imageMat = cv::imread(fullImgFiles[0].string().c_str(), 1);
+		//cv::Mat imageMat = cv::imread(fullImgFiles[0].string().c_str(), 1);
+		cv::Mat imageMat = cv::imread("../samples/prom.jpg", 1);
 
 		for (unsigned int j = 0; j < 1000; j++) {
 			std::vector<float> descriptor;
