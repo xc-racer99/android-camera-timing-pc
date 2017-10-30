@@ -21,6 +21,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QGridLayout>
@@ -30,6 +31,7 @@
 #include <QPainter>
 #include <QScrollArea>
 #include <QSlider>
+#include <QSpinBox>
 #include <QThread>
 #include <QTimer>
 
@@ -213,6 +215,77 @@ void TimingCamera::changeSettings() {
     atBack->setChecked(fromBack);
     layout->addRow(atBack);
 
+    // To set SVM params
+    DetectText::TextDetectionParams params = pipeline->getParams();
+
+    QGroupBox *paramsGroupBox = new QGroupBox(dialog);
+    layout->addRow(paramsGroupBox);
+
+    QFormLayout *paramsLayout = new QFormLayout(paramsGroupBox);
+    paramsGroupBox->setLayout(paramsLayout);
+
+    QCheckBox *darkOnLight = new QCheckBox(dialog);
+    darkOnLight->setChecked(params.darkOnLight);
+    QLabel *darkOnLightLabel = new QLabel(dialog);
+    darkOnLightLabel->setText(tr("Dark Text on Light Background"));
+    paramsLayout->addRow(darkOnLightLabel, darkOnLight);
+
+    QSpinBox *maxStrokeLength = new QSpinBox(dialog);
+    maxStrokeLength->setMinimum(5);
+    maxStrokeLength->setValue(params.maxStrokeLength);
+    maxStrokeLength->setSuffix(tr("px"));
+    QLabel *maxStrokeLengthLabel = new QLabel(dialog);
+    maxStrokeLengthLabel->setText(tr("Max Text Width"));
+    paramsLayout->addRow(maxStrokeLengthLabel, maxStrokeLength);
+
+    QSpinBox *minCharHeight = new QSpinBox(dialog);
+    minCharHeight->setMinimum(5);
+    minCharHeight->setValue(params.minCharacterheight);
+    minCharHeight->setSuffix(tr("px"));
+    QLabel *minCharHeightLabel = new QLabel(dialog);
+    minCharHeightLabel->setText(tr("Min Character Height"));
+    paramsLayout->addRow(minCharHeightLabel, minCharHeight);
+
+    QDoubleSpinBox *maxImgRatio = new QDoubleSpinBox(dialog);
+    maxImgRatio->setDecimals(1);
+    maxImgRatio->setValue(params.maxImgWidthToTextRatio);
+    maxImgRatio->setSuffix(":1");
+    QLabel *maxImgRatioLabel = new QLabel(dialog);
+    maxImgRatioLabel->setText(tr("Max Image to Bib Ratio"));
+    paramsLayout->addRow(maxImgRatioLabel, maxImgRatio);
+
+    QDoubleSpinBox *maxAngle = new QDoubleSpinBox(dialog);
+    maxAngle->setDecimals(1);
+    maxAngle->setMinimum(0);
+    maxAngle->setValue(params.maxAngle);
+    maxAngle->setSuffix("degrees");
+    QLabel *maxAngleLabel = new QLabel(dialog);
+    maxAngleLabel->setText(tr("Max Bib Angle"));
+    paramsLayout->addRow(maxAngleLabel, maxAngle);
+
+    QSpinBox *topBorder = new QSpinBox(dialog);
+    topBorder->setMinimum(0);
+    topBorder->setMaximum(49);
+    topBorder->setValue(params.topBorder);
+    topBorder->setSuffix("%");
+    QLabel *topBorderLabel = new QLabel(dialog);
+    topBorderLabel->setText("Top Border");
+    paramsLayout->addRow(topBorderLabel, topBorder);
+
+    QSpinBox *bottomBorder = new QSpinBox(dialog);
+    bottomBorder->setMinimum(0);
+    bottomBorder->setMaximum(49);
+    bottomBorder->setValue(params.bottomBorder);
+    topBorder->setSuffix("%");
+    QLabel *bottomBorderLabel = new QLabel(dialog);
+    bottomBorderLabel->setText(tr("Bottom Border"));
+    paramsLayout->addRow(bottomBorderLabel, bottomBorder);
+
+    QCheckBox *applyToAll = new QCheckBox(dialog);
+    QLabel *applyToAllLabel = new QLabel(dialog);
+    applyToAllLabel->setText(tr("Apply To All Cameras"));
+    paramsLayout->addRow(applyToAllLabel, applyToAll);
+
     // Buttons
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                                Qt::Horizontal, dialog);
@@ -227,8 +300,26 @@ void TimingCamera::changeSettings() {
     if(dialog->exec() == QDialog::Accepted) {
         setAtBack(atBack->checkState());
         setTimestampOffset(offsetLineEdit->text().toLongLong());
+
+        // Params
+        DetectText::TextDetectionParams newParams = {
+            darkOnLight->checkState(),
+            maxStrokeLength->value(),
+            minCharHeight->value(),
+            (float)maxImgRatio->value(),
+            (float)maxAngle->value(),
+            topBorder->value(),
+            bottomBorder->value(),
+            params.minChainLen,
+            params.modelVerifLenCrit,
+            params.modelVerifMinHeight,
+            false /* use new chaining code */
+        };
+
+        pipeline->setParams(newParams);
+
+        emit settingsChanged();
     }
-    emit settingsChanged();
 }
 
 void TimingCamera::setConnectionStatus(QString status) {

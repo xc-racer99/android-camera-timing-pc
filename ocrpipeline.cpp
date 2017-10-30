@@ -30,16 +30,37 @@ OcrPipeline::OcrPipeline(QString imagesDir, bool fromBack, QObject *parent) : QO
     fromBehind = fromBack;
     running = true;
 
+    params = { true, /* darkOnLight */
+               15, /* maxStrokeLength */
+               11, /* minCharacterHeight */
+               100, /* maxImgWidthToTextRatio */
+               45, /* maxAngle */
+               10, /* topBorder: discard top 10% */
+               5,  /* bottomBorder: discard bottom 5% */
+               3, /* min chain len */
+               0, /* verify with SVM model up to this chain len */
+               0, /* height needs to be this large to verify with model */
+               false /* use new chaining code */
+    };
+
     pipeline.setDirectory(QString(directory + "../../tempImages").toLatin1().constData());
 
     svmModel = "";
     QFile svmFile(directory + "../../svm.xml");
-    if(svmFile.exists())
+    if(svmFile.exists()) {
         svmModel = directory + "../../svm.xml";
+        params.minChainLen = 2;
+        params.modelVerifLenCrit = 2;
+        params.modelVerifMinHeight = 15;
+    }
 }
 
 void OcrPipeline::addImage(QString filename) {
     fileNames.enqueue(filename);
+}
+
+DetectText::TextDetectionParams OcrPipeline::getParams() {
+    return params;
 }
 
 void OcrPipeline::process() {
@@ -53,7 +74,7 @@ void OcrPipeline::process() {
                 qDebug("ERROR:Failed to open image file %s", file.toLatin1().constData());
             } else {
                 std::vector<int> bibNumbers;
-                pipeline.processImage(image, svmModel.toLatin1().constData(), /*darkOnLight*/ 1, bibNumbers);
+                pipeline.processImage(image, svmModel.toLatin1().constData(), bibNumbers, params);
                 if(!bibNumbers.empty()) {
                     if(fromBehind)
                         bibNumber = bibNumbers.back();
@@ -72,6 +93,10 @@ void OcrPipeline::process() {
 
 void OcrPipeline::setFromBehind(bool fromBack) {
     fromBehind = fromBack;
+}
+
+void OcrPipeline::setParams(DetectText::TextDetectionParams parameters) {
+    params = parameters;
 }
 
 void OcrPipeline::stopThread() {
