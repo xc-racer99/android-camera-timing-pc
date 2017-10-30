@@ -9,12 +9,15 @@ namespace pipeline
 {
 	class Pipeline {
 	public:
+		Pipeline(void);
+		~Pipeline(void);
+		void setDirectory(std::string dir);
 		int processImage(cv::Mat& img, std::string svmModel, std::vector<int>& bibNumbers);
 		int processImage(cv::Mat& img, std::string svmModel, std::vector<int>& bibNumbers, DetectText::TextDetectionParams params);
 	private:
 		textrecognition::TextRecognizer textRecognizer;
+		std::string directory;
 	};
-
 }
 
 #endif /* #ifndef PIPELINE_H */

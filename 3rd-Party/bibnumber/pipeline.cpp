@@ -20,6 +20,20 @@ static void vectorAtoi(std::vector<int>&numbers, std::vector<std::string>&text)
 	}
 }
 
+Pipeline::Pipeline()
+{
+	directory = "";
+}
+
+Pipeline::~Pipeline()
+{
+}
+
+void Pipeline::setDirectory(std::string dir) {
+	directory = dir;
+	textRecognizer.setOutputDirectory(directory);
+}
+
 int Pipeline::processImage(
 		cv::Mat& img,
 		std::string svmModel,
