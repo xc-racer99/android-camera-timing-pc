@@ -324,7 +324,10 @@ void TimingCamera::changeSettings() {
             false /* use new chaining code */
         };
 
-        pipeline->setParams(newParams);
+        if(applyToAll->checkState())
+            emit applyParamsElsewhere(newParams);
+        else
+            pipeline->setParams(newParams);
 
         emit settingsChanged();
     }

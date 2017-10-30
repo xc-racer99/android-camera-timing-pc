@@ -76,6 +76,7 @@ private:
     QHash<QString, QString> hash;
 
 signals:
+    void applyParamsElsewhere(DetectText::TextDetectionParams params);
     void changeImage(int index);
     void checkEntries(int maxEntries, qint64 largestTimestamp);
     void newEntry(int channel, QString bib, QString time);
@@ -89,6 +90,7 @@ private slots:
     void plusButtonPushed();
     void minusButtonPushed();
 public slots:
+    void applyParams(DetectText::TextDetectionParams params);
 };
 
 #endif // TIMINGPOINT_H

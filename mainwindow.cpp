@@ -206,6 +206,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             TimingPoint *tPoint = new TimingPoint(directory, name, info, maxViews.toInt(), summitChannel.toInt(), this);
             connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
             connect(tPoint, SIGNAL(settingsChanged()), this, SLOT(saveSettings()));
+            connect(tPoint,
+                    SIGNAL(applyParamsElsewhere(DetectText::TextDetectionParams)),
+                    this,
+                    SLOT(applyParamsElsewhere(DetectText::TextDetectionParams)));
             tPoints.append(tPoint);
             layout->addWidget(tPoint);
             n = n.nextSiblingElement("TimingPoint");
@@ -215,6 +219,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Create a dialog asking about summit emulation
     getSummitInfo();
+}
+
+void MainWindow::applyParamsElsewhere(DetectText::TextDetectionParams params) {
+    for(int i = 0; i < tPoints.length(); i++)
+        tPoints.at(i)->applyParams(params);
 }
 
 void MainWindow::quit() {
@@ -372,6 +381,10 @@ void MainWindow::newTimingPoint() {
                                               numViews->text().toInt(), channelNumber->text().toInt(), this);
         connect(tPoint, SIGNAL(newEntry(int,QString,QString)), summit, SLOT(sendData(int,QString,QString)));
         connect(tPoint, SIGNAL(settingsChanged()), this, SLOT(saveSettings()));
+        connect(tPoint,
+                SIGNAL(applyParamsElsewhere(DetectText::TextDetectionParams)),
+                this,
+                SLOT(applyParamsElsewhere(DetectText::TextDetectionParams)));
         tPoints.append(tPoint);
         layout->addWidget(tPoint);
         saveSettings();

@@ -61,6 +61,7 @@ private:
     void startBackgroundThread();
 
 signals:
+    void applyParamsElsewhere(DetectText::TextDetectionParams params);
     void settingsChanged();
     void newImage();
 public slots:

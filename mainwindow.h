@@ -25,9 +25,9 @@ private:
     int nextChannelNum;
     QList<TimingPoint*> tPoints;
 signals:
-
 public slots:
 private slots:
+    void applyParamsElsewhere(DetectText::TextDetectionParams params);
     void changeSvmModel();
     void getSummitInfo();
     void newTimingPoint();

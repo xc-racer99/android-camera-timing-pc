@@ -188,6 +188,10 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
         connect(this, SIGNAL(checkEntries(int,qint64)), temp, SLOT(checkEntries(int,qint64)));
         connect(temp, SIGNAL(newImage()), this, SLOT(incrementSliderMax()));
         connect(temp, SIGNAL(settingsChanged()), this, SIGNAL(settingsChanged()));
+        connect(temp,
+                SIGNAL(applyParamsElsewhere(DetectText::TextDetectionParams)),
+                this,
+                SIGNAL(applyParamsElsewhere(DetectText::TextDetectionParams)));
     }
 
     // Trigger change to image
@@ -216,6 +220,12 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
 TimingPoint::~TimingPoint() {
     csvFile->close();
     delete csvFile;
+}
+
+void TimingPoint::applyParams(DetectText::TextDetectionParams params) {
+    for(int i = 0; i < timingCameras.length(); i++) {
+        timingCameras.at(i)->setParams(params);
+    }
 }
 
 void TimingPoint::submitButtonPushed() {
