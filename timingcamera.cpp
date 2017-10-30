@@ -227,6 +227,7 @@ void TimingCamera::changeSettings() {
     DetectText::TextDetectionParams params = pipeline->getParams();
 
     QGroupBox *paramsGroupBox = new QGroupBox(dialog);
+    paramsGroupBox->setTitle("OCR Parameters");
     layout->addRow(paramsGroupBox);
 
     QFormLayout *paramsLayout = new QFormLayout(paramsGroupBox);
