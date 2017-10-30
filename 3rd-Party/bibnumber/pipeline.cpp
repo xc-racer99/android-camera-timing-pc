@@ -24,7 +24,6 @@ int Pipeline::processImage(
 		cv::Mat& img,
 		std::string svmModel,
 		std::vector<int>& bibNumbers) {
-	std::vector<std::string> text;
 	struct DetectText::TextDetectionParams params = {
 						true, /* darkOnLight */
 						15, /* maxStrokeLength */
@@ -38,6 +37,15 @@ int Pipeline::processImage(
 						0, /* height needs to be this large to verify with model */
 						false, /* use gheinrich's chain code */
 				};
+	return processImage(img, svmModel, bibNumbers, params);
+}
+
+int Pipeline::processImage(
+		cv::Mat& img,
+		std::string svmModel,
+		std::vector<int>& bibNumbers,
+		DetectText::TextDetectionParams params) {
+	std::vector<std::string> text;
 
 	if (!svmModel.empty())
 	{
@@ -60,4 +68,3 @@ int Pipeline::processImage(
 }
 
 } /* namespace pipeline */
-
