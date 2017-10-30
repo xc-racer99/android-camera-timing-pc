@@ -317,8 +317,8 @@ Mat textDetection (Mat& input, bool dark_on_light) {
             11, /* minCharacterHeight */
             100, /* maxImgWidthToTextRatio */
             45, /* maxAngle */
-            input.rows * 10/100, /* topBorder: discard top 10% */
-            input.rows * 5/100,  /* bottomBorder: discard bottom 5% */
+            10, /* topBorder: discard top 10% */
+            5,  /* bottomBorder: discard bottom 5% */
             3, /* min chain len */
             0, /* verify with SVM model up to this chain len */
             0, /* height needs to be this large to verify with model */
@@ -342,8 +342,8 @@ Mat textDetection (Mat& input,
     std::cout << "Running textDetection with dark_on_light " << params.darkOnLight << std::endl;
 
     // Remove borders according to params
-    Point p1(0, params.topBorder);
-    Point p2(input.cols, input.rows-params.bottomBorder);
+    Point p1(0, input.rows * params.topBorder / 100);
+    Point p2(input.cols, input.rows - (input.rows * params.topBorder / 100));
     input = input(Rect(p1, p2));
 
     // Convert to grayscale
