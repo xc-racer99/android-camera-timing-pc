@@ -11,6 +11,8 @@
 #include <QSlider>
 #include <QWidget>
 
+#include "3rd-Party/bibnumber/textdetection.h"
+
 #include "timingcamera.h"
 
 class TimingPoint : public QGroupBox
@@ -22,8 +24,31 @@ public:
         QString ip;
         qint64 offset;
         bool atBack;
+        DetectText::TextDetectionParams params;
 
-        CameraInfo(QString cameraName, QString ipAddress, qint64 timeOffset, bool atBackArg) : name(cameraName), ip(ipAddress), offset(timeOffset), atBack(atBackArg) {}
+        CameraInfo(QString cameraName,
+                   QString ipAddress,
+                   qint64 timeOffset,
+                   bool atBackArg, DetectText::TextDetectionParams parameters) :
+            name(cameraName), ip(ipAddress), offset(timeOffset), atBack(atBackArg), params(parameters){}
+        CameraInfo(QString cameraName,
+                   QString ipAddress,
+                   qint64 timeOffset,
+                   bool atBackArg) :
+            name(cameraName), ip(ipAddress), offset(timeOffset), atBack(atBackArg) {
+            params = { true, /* darkOnLight */
+                       15, /* maxStrokeLength */
+                       11, /* minCharacterHeight */
+                       100, /* maxImgWidthToTextRatio */
+                       45, /* maxAngle */
+                       10, /* topBorder: discard top 10% */
+                       5,  /* bottomBorder: discard bottom 5% */
+                       3, /* min chain len */
+                       0, /* verify with SVM model up to this chain len */
+                       0, /* height needs to be this large to verify with model */
+                       false /* use new chaining code */
+            };
+        }
     };
 
     explicit TimingPoint(QString directory, QString name, QList<CameraInfo> cameras, int maxNum, int channelNum, QWidget *parent = 0);

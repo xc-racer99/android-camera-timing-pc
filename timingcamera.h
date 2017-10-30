@@ -21,9 +21,11 @@ public:
     bool getAtBack(void);
     QString getIpAddress(void);
     QString getName(void);
+    DetectText::TextDetectionParams getParams();
     qint64 getTimestampOffset(void);
     void setAtBack(bool fromBehind);
     void setTimestampOffset(qint64 offset);
+    void setParams(DetectText::TextDetectionParams params);
     void addBlankImage(qint64 time);
 
     struct Entry {

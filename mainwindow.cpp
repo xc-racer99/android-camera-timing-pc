@@ -143,11 +143,64 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             QList<TimingPoint::CameraInfo> info;
             QDomElement child = n.firstChildElement("TimingCamera");
             while(!child.isNull()) {
-                QString cameraName = child.firstChildElement("Name").text();
-                QString cameraIp = child.firstChildElement("IP").text();
-                bool atBack = child.firstChildElement("AtBack").text() == "true";
-                qint64 timeOffset = child.firstChildElement("TimeOffset").text().toLongLong();
-                info.append(TimingPoint::CameraInfo(cameraName, cameraIp, timeOffset, atBack));
+                QString cameraName = "Camera";
+                QDomElement name = child.firstChildElement("Name");
+                if(!name.isNull())
+                    cameraName = name.text();
+                QString cameraIp = "";
+                QDomElement ip = child.firstChildElement("IP");
+                if(!ip.isNull())
+                    cameraIp = ip.text();
+                bool atBack = false;
+                QDomElement back = child.firstChildElement("AtBack");
+                if(!back.isNull())
+                    atBack = std::stoi(back.text().toLatin1().constData());
+                qint64 timeOffset = 0;
+                QDomElement time = child.firstChildElement("TimeOffset");
+                if(!time.isNull())
+                    timeOffset = time.text().toLongLong();
+                // Check params
+                QDomElement paramsElement = child.firstChildElement("Params");
+                if(paramsElement.isNull()) {
+                    info.append(TimingPoint::CameraInfo(cameraName, cameraIp, timeOffset, atBack));
+                } else {
+                    TimingPoint::CameraInfo cInfo(cameraName, cameraIp, timeOffset, atBack);
+                    QDomElement darkOnLight = paramsElement.firstChildElement("DarkOnLight");
+                    if(!darkOnLight.isNull()) {
+                        cInfo.params.darkOnLight = std::stoi(darkOnLight.text().toLatin1().constData());
+                    }
+                    QDomElement maxStrokeLength = paramsElement.firstChildElement("MaxStrokeLength");
+                    if(!maxStrokeLength.isNull())
+                        cInfo.params.maxStrokeLength = maxStrokeLength.text().toInt();
+                    QDomElement minCharHeight = paramsElement.firstChildElement("MinCharacterHeight");
+                    if(!minCharHeight.isNull())
+                        cInfo.params.minCharacterheight = minCharHeight.text().toInt();
+                    QDomElement maxImgWidth = paramsElement.firstChildElement("MaxImgWidthToTextRatio");
+                    if(!maxImgWidth.isNull())
+                        cInfo.params.maxImgWidthToTextRatio = maxImgWidth.text().toFloat();
+                    QDomElement maxAngle = paramsElement.firstChildElement("MaxAngle");
+                    if(!maxAngle.isNull())
+                        cInfo.params.maxAngle = maxAngle.text().toFloat();
+                    QDomElement topBorder = paramsElement.firstChildElement("TopBorder");
+                    if(!topBorder.isNull())
+                        cInfo.params.topBorder = topBorder.text().toInt();
+                    QDomElement bottomBorder = paramsElement.firstChildElement("BottomBorder");
+                    if(!bottomBorder.isNull())
+                        cInfo.params.bottomBorder = bottomBorder.text().toInt();
+                    QDomElement minChainLen = paramsElement.firstChildElement("MinChainLen");
+                    if(!minChainLen.isNull())
+                        cInfo.params.minChainLen = minChainLen.text().toInt();
+                    QDomElement modelLen = paramsElement.firstChildElement("ModelVerifLenCrit");
+                    if(!modelLen.isNull())
+                        cInfo.params.modelVerifLenCrit = modelLen.text().toInt();
+                    QDomElement modelHeight = paramsElement.firstChildElement("ModelVerifMinHeight");
+                    if(!modelHeight.isNull())
+                        cInfo.params.modelVerifMinHeight = modelHeight.text().toInt();
+                    QDomElement chainCode = paramsElement.firstChildElement("UseOriginalChainCode");
+                    if(!chainCode.isNull())
+                        cInfo.params.useOriginalChainCode = std::stoi(chainCode.text().toLatin1().constData());
+                    info.append(cInfo);
+                }
                 child = child.nextSiblingElement("TimingCamera");
             }
             TimingPoint *tPoint = new TimingPoint(directory, name, info, maxViews.toInt(), summitChannel.toInt(), this);
@@ -195,32 +248,70 @@ void MainWindow::saveSettings() {
             point.appendChild(camera);
             QDomElement name = saveFile.createElement("Name");
             camera.appendChild(name);
-            QDomText nameText = saveFile.createTextNode(cameraInfo.at(j).name);
-            name.appendChild(nameText);
+            name.appendChild(saveFile.createTextNode(cameraInfo.at(j).name));
             QDomElement ip = saveFile.createElement("IP");
             camera.appendChild(ip);
-            QDomText ipText = saveFile.createTextNode(cameraInfo.at(j).ip);
-            ip.appendChild(ipText);
+            ip.appendChild(saveFile.createTextNode(cameraInfo.at(j).ip));
             QDomElement atBack = saveFile.createElement("AtBack");
             camera.appendChild(atBack);
-            bool fromBehind = cameraInfo.at(j).atBack;
-            if(fromBehind) {
-                QDomText atBackText = saveFile.createTextNode("true");
-                atBack.appendChild(atBackText);
+            if(cameraInfo.at(j).atBack) {
+                atBack.appendChild(saveFile.createTextNode("1"));
             } else {
-                QDomText atBackText = saveFile.createTextNode("false");
-                atBack.appendChild(atBackText);
+                atBack.appendChild(saveFile.createTextNode("0"));
             }
             QDomElement timeOffset = saveFile.createElement("TimeOffset");
             camera.appendChild(timeOffset);
             QDomText timeOffsetText = saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).offset));
             timeOffset.appendChild(timeOffsetText);
+            QDomElement params = saveFile.createElement("Params");
+            camera.appendChild(params);
+            // Add all the parameters
+            QDomElement darkOnLight = saveFile.createElement("DarkOnLight");
+            params.appendChild(darkOnLight);
+            if(cameraInfo.at(j).params.darkOnLight) {
+                darkOnLight.appendChild(saveFile.createTextNode("1"));
+            } else {
+                darkOnLight.appendChild(saveFile.createTextNode("0"));
+            }
+            QDomElement maxStrokeLength = saveFile.createElement("MaxStrokeLength");
+            params.appendChild(maxStrokeLength);
+            maxStrokeLength.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.maxStrokeLength)));
+            QDomElement minCharacterHeight = saveFile.createElement("MinCharacterHeight");
+            params.appendChild(minCharacterHeight);
+            minCharacterHeight.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.minCharacterheight)));
+            QDomElement maxImgWidthToTextRatio = saveFile.createElement("MaxImgWidthToTextRatio");
+            params.appendChild(maxImgWidthToTextRatio);
+            maxImgWidthToTextRatio.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.maxImgWidthToTextRatio)));
+            QDomElement maxAngle = saveFile.createElement("MaxAngle");
+            params.appendChild(maxAngle);
+            maxAngle.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.maxAngle)));
+            QDomElement topBorder = saveFile.createElement("TopBorder");
+            params.appendChild(topBorder);
+            topBorder.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.topBorder)));
+            QDomElement bottomBorder = saveFile.createElement("BottomBorder");
+            params.appendChild(bottomBorder);
+            bottomBorder.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.bottomBorder)));
+            QDomElement minChainLen = saveFile.createElement("MinChainLen");
+            params.appendChild(minChainLen);
+            minChainLen.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.minChainLen)));
+            QDomElement modelVerifLenCrit = saveFile.createElement("ModelVerifLenCrit");
+            params.appendChild(modelVerifLenCrit);
+            modelVerifLenCrit.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.modelVerifLenCrit)));
+            QDomElement modelVerifMinHeight = saveFile.createElement("ModelVerifMinHeight");
+            params.appendChild(modelVerifMinHeight);
+            modelVerifMinHeight.appendChild(saveFile.createTextNode(QString("%1").arg(cameraInfo.at(j).params.modelVerifMinHeight)));
+            QDomElement useOriginalChainCode = saveFile.createElement("UseOriginalChainCode");
+            params.appendChild(useOriginalChainCode);
+            if(cameraInfo.at(j).params.useOriginalChainCode)
+                useOriginalChainCode.appendChild(saveFile.createTextNode("1"));
+            else
+                useOriginalChainCode.appendChild(saveFile.createTextNode("0"));
         }
         root.appendChild(point);
     }
 
     QTextStream out(&file);
-    saveFile.save(out, 4);
+    saveFile.save(out, 2);
     file.close();
 }
 

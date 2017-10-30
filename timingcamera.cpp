@@ -169,6 +169,10 @@ void TimingCamera::setAtBack(bool fromBehind) {
     pipeline->setFromBehind(fromBehind);
 }
 
+void TimingCamera::setParams(DetectText::TextDetectionParams params) {
+    pipeline->setParams(params);
+}
+
 void TimingCamera::setTimestampOffset(qint64 offset) {
     timeOffset = offset;
 }
@@ -184,6 +188,10 @@ QString TimingCamera::getIpAddress() {
 QString TimingCamera::getName() {
     QDir info(directory);
     return info.dirName();
+}
+
+DetectText::TextDetectionParams TimingCamera::getParams() {
+    return pipeline->getParams();
 }
 
 qint64 TimingCamera::getTimestampOffset() {
@@ -276,7 +284,7 @@ void TimingCamera::changeSettings() {
     bottomBorder->setMinimum(0);
     bottomBorder->setMaximum(49);
     bottomBorder->setValue(params.bottomBorder);
-    topBorder->setSuffix("%");
+    bottomBorder->setSuffix("%");
     QLabel *bottomBorderLabel = new QLabel(dialog);
     bottomBorderLabel->setText(tr("Bottom Border"));
     paramsLayout->addRow(bottomBorderLabel, bottomBorder);
