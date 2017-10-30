@@ -398,7 +398,7 @@ int process(std::string trainDir, std::string inputDir) {
 		std::cout << i << " prediction=" << prediction << std::endl;
 		if (prediction > 0.5) {
 			char filename[end/10 + 1 + 14];
-            sprintf(filename, "positive-%d.png", i);
+			sprintf(filename, "positive-%d.png", i);
 			cv::imwrite(filename, imageMat(roi));
 			free(filename);
 		}

@@ -424,9 +424,8 @@ int TextRecognizer::recognize(cv::Mat input,
 
 				/* save for training only if orientation is ~horizontal */
 				if (abs(theta_deg) < 7) {
-					char *filename;
-					asprintf(&filename, "bib-%05d-%04d.png", this->bsid++,
-							atoi(out));
+					char *filename = (char *)malloc(18 * sizeof(char *));
+					sprintf(filename, "bib-%05d-%04d.png", this->bsid++, atoi(out));
 					cv::imwrite(directory + "bibs/" + filename, bibMat);
 					free(filename);
 				}
