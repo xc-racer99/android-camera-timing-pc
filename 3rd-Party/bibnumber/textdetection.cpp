@@ -359,13 +359,13 @@ Mat textDetection (Mat& input,
     // Create gradient X, gradient Y
     Mat gaussianImage( input.size(), CV_32FC1);
     grayImage.convertTo(gaussianImage, CV_32FC1, 1./255.);
-    GaussianBlur( gaussianImage, gaussianImage, Size(5, 5), 0);
+    GaussianBlur( gaussianImage, gaussianImage, Size(5, 5), 0, 0, cv::BORDER_REPLICATE);
     Mat gradientX( input.size(), CV_32FC1 );
     Mat gradientY( input.size(), CV_32FC1 );
-    Scharr(gaussianImage, gradientX, -1, 1, 0);
-    Scharr(gaussianImage, gradientY, -1, 0, 1);
-    GaussianBlur(gradientX, gradientX, Size(3, 3), 0);
-    GaussianBlur(gradientY, gradientY, Size(3, 3), 0);
+    Scharr(gaussianImage, gradientX, gradientX.depth(), 1, 0, 1, 0, cv::BORDER_REPLICATE);
+    Scharr(gaussianImage, gradientY, gradientY.depth(), 0, 1, 1, 0, cv::BORDER_REPLICATE);
+    medianBlur(gradientX, gradientX, 3);
+    medianBlur(gradientY, gradientY, 3);
 
     // Calculate SWT and return ray vectors
     std::vector<Ray> rays;
