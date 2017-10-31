@@ -135,6 +135,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         QDomElement docElem = saveFile.documentElement();
         int summitDeviceNumber = docElem.attribute("devicenumber", "0").toInt();
         summit->setDeviceNumber(summitDeviceNumber);
+        QString serialName = docElem.attribute("summitport", "");
+        if(!serialName.isEmpty()) {
+            QSerialPortInfo serialInfo(serialName);
+            if(serialInfo.isValid())
+                summit->setPort(serialInfo);
+        }
         QDomElement n = docElem.firstChildElement("TimingPoint");
         while(!n.isNull()) {
             QString name = n.attribute("name");
@@ -215,6 +221,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             n = n.nextSiblingElement("TimingPoint");
         }
         saveSettings();
+        return;
     }
 
     // Create a dialog asking about summit emulation
@@ -243,6 +250,7 @@ void MainWindow::saveSettings() {
     QDomDocument saveFile;
     QDomElement root = saveFile.createElement("CameraTiming");
     root.setAttribute("devicenumber", summit->getDeviceNumber());
+    root.setAttribute("summitport", summit->getPortName());
     saveFile.appendChild(root);
     for(int i = 0; i < tPoints.length(); i++) {
         TimingPoint *tPoint = tPoints.at(i);

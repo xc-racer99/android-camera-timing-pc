@@ -17,6 +17,7 @@ public:
     ~SummitEmulator();
 
     int getDeviceNumber();
+    QString getPortName();
 
     void setDeviceNumber(int number);
     void setPort(QSerialPortInfo info);

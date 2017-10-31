@@ -42,12 +42,16 @@ int SummitEmulator::getDeviceNumber() {
     return deviceNumber;
 }
 
-void SummitEmulator::setPort(QSerialPortInfo info) {
-    serialPort->setPort(info);
+QString SummitEmulator::getPortName() {
+    return serialPort->portName();
 }
 
 void SummitEmulator::setDeviceNumber(int number) {
     deviceNumber = number;
+}
+
+void SummitEmulator::setPort(QSerialPortInfo info) {
+    serialPort->setPort(info);
 }
 
 void SummitEmulator::initialize() {
