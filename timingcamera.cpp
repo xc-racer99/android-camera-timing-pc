@@ -233,8 +233,15 @@ void TimingCamera::changeSettings() {
     QFormLayout *paramsLayout = new QFormLayout(paramsGroupBox);
     paramsGroupBox->setLayout(paramsLayout);
 
+    // Load default button
+    QCheckBox *loadDefaults = new QCheckBox(dialog);
+    QLabel *loadDefaultsLabel = new QLabel(dialog);
+    loadDefaultsLabel->setText(tr("Load Defaults"));
+    paramsLayout->addRow(loadDefaultsLabel, loadDefaults);
+
     QCheckBox *darkOnLight = new QCheckBox(dialog);
     darkOnLight->setChecked(params.darkOnLight);
+    connect(loadDefaults, SIGNAL(toggled(bool)), darkOnLight, SLOT(setDisabled(bool)));
     QLabel *darkOnLightLabel = new QLabel(dialog);
     darkOnLightLabel->setText(tr("Dark Text on Light Background"));
     paramsLayout->addRow(darkOnLightLabel, darkOnLight);
@@ -243,6 +250,7 @@ void TimingCamera::changeSettings() {
     maxStrokeLength->setMinimum(5);
     maxStrokeLength->setValue(params.maxStrokeLength);
     maxStrokeLength->setSuffix(tr("px"));
+    connect(loadDefaults, SIGNAL(toggled(bool)), maxStrokeLength, SLOT(setDisabled(bool)));
     QLabel *maxStrokeLengthLabel = new QLabel(dialog);
     maxStrokeLengthLabel->setText(tr("Max Text Width"));
     paramsLayout->addRow(maxStrokeLengthLabel, maxStrokeLength);
@@ -251,6 +259,7 @@ void TimingCamera::changeSettings() {
     minCharHeight->setMinimum(5);
     minCharHeight->setValue(params.minCharacterheight);
     minCharHeight->setSuffix(tr("px"));
+    connect(loadDefaults, SIGNAL(toggled(bool)), minCharHeight, SLOT(setDisabled(bool)));
     QLabel *minCharHeightLabel = new QLabel(dialog);
     minCharHeightLabel->setText(tr("Min Character Height"));
     paramsLayout->addRow(minCharHeightLabel, minCharHeight);
@@ -259,6 +268,7 @@ void TimingCamera::changeSettings() {
     maxImgRatio->setDecimals(1);
     maxImgRatio->setValue(params.maxImgWidthToTextRatio);
     maxImgRatio->setSuffix(":1");
+    connect(loadDefaults, SIGNAL(toggled(bool)), maxImgRatio, SLOT(setDisabled(bool)));
     QLabel *maxImgRatioLabel = new QLabel(dialog);
     maxImgRatioLabel->setText(tr("Max Image to Bib Ratio"));
     paramsLayout->addRow(maxImgRatioLabel, maxImgRatio);
@@ -268,6 +278,7 @@ void TimingCamera::changeSettings() {
     maxAngle->setMinimum(0);
     maxAngle->setValue(params.maxAngle);
     maxAngle->setSuffix("degrees");
+    connect(loadDefaults, SIGNAL(toggled(bool)), maxAngle, SLOT(setDisabled(bool)));
     QLabel *maxAngleLabel = new QLabel(dialog);
     maxAngleLabel->setText(tr("Max Bib Angle"));
     paramsLayout->addRow(maxAngleLabel, maxAngle);
@@ -277,6 +288,7 @@ void TimingCamera::changeSettings() {
     topBorder->setMaximum(49);
     topBorder->setValue(params.topBorder);
     topBorder->setSuffix("%");
+    connect(loadDefaults, SIGNAL(toggled(bool)), topBorder, SLOT(setDisabled(bool)));
     QLabel *topBorderLabel = new QLabel(dialog);
     topBorderLabel->setText("Top Border");
     paramsLayout->addRow(topBorderLabel, topBorder);
@@ -286,6 +298,7 @@ void TimingCamera::changeSettings() {
     bottomBorder->setMaximum(49);
     bottomBorder->setValue(params.bottomBorder);
     bottomBorder->setSuffix("%");
+    connect(loadDefaults, SIGNAL(toggled(bool)), bottomBorder, SLOT(setDisabled(bool)));
     QLabel *bottomBorderLabel = new QLabel(dialog);
     bottomBorderLabel->setText(tr("Bottom Border"));
     paramsLayout->addRow(bottomBorderLabel, bottomBorder);
@@ -324,6 +337,22 @@ void TimingCamera::changeSettings() {
             params.modelVerifMinHeight,
             false /* use new chaining code */
         };
+
+        if(loadDefaults->checkState()) {
+            newParams = {
+                true, /* darkOnLight */
+                15, /* maxStrokeLength */
+                11, /* minCharacterHeight */
+                100, /* maxImgWidthToTextRatio */
+                45, /* maxAngle */
+                10, /* topBorder: discard top 10% */
+                5,  /* bottomBorder: discard bottom 5% */
+                3, /* min chain len */
+                0, /* verify with SVM model up to this chain len */
+                0, /* height needs to be this large to verify with model */
+                false /* use new chaining code */
+            };
+        }
 
         if(applyToAll->checkState())
             emit applyParamsElsewhere(newParams);
