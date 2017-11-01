@@ -66,3 +66,7 @@ install(TARGETS bibnumber-cmd-line
 	RUNTIME
 	DESTINATION .)
 endif()
+
+# install licensing file
+install(FILES Info DESTINATION licenses
+	RENAME "bibnumber (OCR).txt")

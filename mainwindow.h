@@ -28,6 +28,7 @@ signals:
 public slots:
 private slots:
     void applyParamsElsewhere(DetectText::TextDetectionParams params);
+    void licenses();
     void changeSvmModel();
     void getSummitInfo();
     void newTimingPoint();

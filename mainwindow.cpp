@@ -29,6 +29,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QScrollArea>
+#include <QTextEdit>
 #include <QTextStream>
 
 #include "mainwindow.h"
@@ -68,6 +69,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QAction *actionSummitSettings = new QAction(this);
     QMenu *ocrSettings = new QMenu(this);
     QAction *svmModel = new QAction(this);
+    QMenu *helpMenu = new QMenu(this);
+    QAction *licensesAction = new QAction(this);
 
     // Set the text
     actionNewTimingPoint->setText("New Timing Point");
@@ -77,15 +80,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     actionSummitSettings->setText(tr("Settings"));
     ocrSettings->setTitle(tr("OCR"));
     svmModel->setText(tr("Choose SVM Model..."));
+    helpMenu->setTitle(tr("Help"));
+    licensesAction->setText(tr("Licenses"));
 
     // Add the menu items to the file menu and it to the menu
     menubar->addAction(menuFile->menuAction());
     menubar->addAction(menuSummit->menuAction());
     menubar->addAction(ocrSettings->menuAction());
+    menubar->addAction(helpMenu->menuAction());
     menuFile->addAction(actionNewTimingPoint);
     menuFile->addAction(actionQuit);
     menuSummit->addAction(actionSummitSettings);
     ocrSettings->addAction(svmModel);
+    helpMenu->addAction(licensesAction);
 
     // Set the menu bar
     this->setMenuBar(menubar);
@@ -95,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(actionQuit, SIGNAL(triggered(bool)), this, SLOT(quit()));
     connect(actionSummitSettings, SIGNAL(triggered(bool)), this, SLOT(getSummitInfo()));
     connect(svmModel, SIGNAL(triggered(bool)), this, SLOT(changeSvmModel()));
+    connect(licensesAction, SIGNAL(triggered(bool)), this, SLOT(licenses()));
 
     // Create the layout
     QScrollArea *scrollArea = new QScrollArea(this);
@@ -159,8 +167,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                     cameraIp = ip.text();
                 bool atBack = false;
                 QDomElement back = child.firstChildElement("AtBack");
-                if(!back.isNull())
-                    atBack = std::stoi(back.text().toLatin1().constData());
+                if(!back.isNull()) {
+                    atBack = back.text().toInt();
+                }
                 qint64 timeOffset = 0;
                 QDomElement time = child.firstChildElement("TimeOffset");
                 if(!time.isNull())
@@ -173,7 +182,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                     TimingPoint::CameraInfo cInfo(cameraName, cameraIp, timeOffset, atBack);
                     QDomElement darkOnLight = paramsElement.firstChildElement("DarkOnLight");
                     if(!darkOnLight.isNull()) {
-                        cInfo.params.darkOnLight = std::stoi(darkOnLight.text().toLatin1().constData());
+                        cInfo.params.darkOnLight = darkOnLight.text().toInt();
                     }
                     QDomElement maxStrokeLength = paramsElement.firstChildElement("MaxStrokeLength");
                     if(!maxStrokeLength.isNull())
@@ -204,7 +213,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                         cInfo.params.modelVerifMinHeight = modelHeight.text().toInt();
                     QDomElement chainCode = paramsElement.firstChildElement("UseOriginalChainCode");
                     if(!chainCode.isNull())
-                        cInfo.params.useOriginalChainCode = std::stoi(chainCode.text().toLatin1().constData());
+                        cInfo.params.useOriginalChainCode = chainCode.text().toInt();
                     info.append(cInfo);
                 }
                 child = child.nextSiblingElement("TimingCamera");
@@ -226,6 +235,53 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Create a dialog asking about summit emulation
     getSummitInfo();
+}
+
+void MainWindow::licenses() {
+    QDir dir("licenses");
+    QStringList filters;
+    filters.append("*.txt");
+    QFileInfoList licenses = dir.entryInfoList(filters, QDir::Files);
+
+    QDialog dialog(this);
+    QVBoxLayout layout(&dialog);
+    dialog.setLayout(&layout);
+    dialog.setMinimumWidth(500);
+
+    // Licenses header
+    QLabel licenseHeader(&dialog);
+    licenseHeader.setText(tr("Open-Source Licenses"));
+    layout.addWidget(&licenseHeader);
+
+    // For each *.txt file, create an entry
+    QScrollArea licenseScroll(&dialog);
+    licenseScroll.setWidgetResizable(true);
+    layout.addWidget(&licenseScroll);
+
+    QWidget licenseHolder(&licenseScroll);
+    QVBoxLayout licenseLayout(&licenseHolder);
+    licenseHolder.setLayout(&licenseLayout);
+    licenseScroll.setWidget(&licenseHolder);
+    for(int i = 0; i < licenses.length(); i++) {
+        QFile file(licenses.at(i).absoluteFilePath());
+        if(!file.open(QIODevice::ReadOnly))
+            continue;
+        QLabel *label = new QLabel(&licenseHolder);
+        label->setText(licenses.at(i).baseName());
+        label->setMinimumHeight(10);
+        licenseLayout.addWidget(label);
+        QString text(file.readAll());
+        QTextEdit *licenseText = new QTextEdit(&licenseHolder);
+        licenseText->setReadOnly(true);
+        licenseText->setText(text);
+        licenseText->setMinimumHeight(100);
+        licenseText->setMinimumWidth(400);
+        licenseLayout.addWidget(licenseText);
+        file.close();
+    }
+
+    // Show the dialog
+    dialog.exec();
 }
 
 void MainWindow::applyParamsElsewhere(DetectText::TextDetectionParams params) {

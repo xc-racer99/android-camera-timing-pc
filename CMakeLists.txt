@@ -72,6 +72,10 @@ install(TARGETS AndroidCameraTiming
 	RUNTIME
 	DESTINATION .)
 
+# install licensing file
+install(FILES COPYING DESTINATION licenses
+	RENAME "Main Program.txt")
+
 if(MINGW)
 	# package the needed libraries, superbuild installs them into ${PROJECT_BINARY_DIR}
 	file(GLOB DLLs ${PROJECT_BINARY_DIR}/../install/ProgramFiles/bin/*.dll)
@@ -89,6 +93,11 @@ if(MINGW)
 	# install tessdata directory
 	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/tessdata
 		DESTINATION .)
+
+	# install license files
+	file(GLOB LICENSE_FILES "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright*.txt")
+	install(FILES "${LICENSE_FILES}"
+		DESTINATION licenses)
 
 	# gcc libraries - Fix-ME - these should probably not be hard-coded...
 	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libstdc++-6.dll
