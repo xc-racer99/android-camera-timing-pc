@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  **/
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QThread>
 
@@ -87,6 +88,7 @@ void OcrPipeline::process() {
             // Nothing in queue, wait 1s and check again
             QThread::sleep(1);
         }
+        QCoreApplication::processEvents();
     }
     emit finished();
 }
