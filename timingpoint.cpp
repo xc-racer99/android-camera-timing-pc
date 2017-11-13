@@ -473,7 +473,6 @@ void TimingPoint::incrementSliderMax() {
 
         // Update the camera arrays as necessary
         emit checkEntries(maxEntries, largestTimestamp);
-        qDebug("Got here");
 
         // Trigger the slider move, so if we were showing an old image,the new one will appear
         updateImageInfo(imageSlider->sliderPosition());
