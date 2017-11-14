@@ -60,6 +60,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
 
     // Store the highest number of exisiting images for the slider
     int maxNumberOfImages = 0;
+    qint64 largestTimestamp = 0;
 
     for(int i = 0; i < cameras.length(); i++) {
         timingCameras.append(new TimingCamera(subDirectory + cameras.at(i).name, cameras.at(i).ip));
@@ -70,6 +71,9 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
         int numImages = temp->entries.length();
         if(numImages > maxNumberOfImages)
             maxNumberOfImages = numImages;
+        qint64 timestamp = temp->entries.at(i).timestamp;
+        if(timestamp > largestTimestamp)
+            largestTimestamp = timestamp;
     }
 
     // Create our info labels
@@ -193,6 +197,9 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
                 this,
                 SIGNAL(applyParamsElsewhere(DetectText::TextDetectionParams)));
     }
+
+    // Make sure all the cameras have the same number of images
+    emit checkEntries(maxNumberOfImages, largestTimestamp);
 
     // Trigger change to image
     imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
