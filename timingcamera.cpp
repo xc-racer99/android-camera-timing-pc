@@ -127,6 +127,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     // Create a list of images already present
     QStringList filter("*.jpg");
+    filter.append("*.png");
     QFileInfoList initialFileInfo = temp.entryInfoList(filter, QDir::Files, QDir::Name);
     for(int i = 0; i < initialFileInfo.length(); i++) {
         QString rawTimestamp = initialFileInfo.at(i).baseName();
@@ -429,28 +430,52 @@ void TimingCamera::addNewImage(QString fileName, int bibNumber) {
     QFileInfo info(fileName);
     QString rawTimestamp = info.baseName();
     bool ok;
-    qint64 timestamp = rawTimestamp.toLongLong(&ok);
+    qint64 timestamp = rawTimestamp.toLongLong(&ok) + timeOffset;
     if(ok) {
-        // Check through previous dummy entries with timestamps
-        for(int i = entries.length() - 1; i >= 0; i--) {
-            if(entries.at(i).timestamp != 0) {
-                // Not a dummy entry, just add it
-                entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
-                break;
-            }
-            QFileInfo tempFile = QFile(entries.at(i).file);
-            qint64 lastActualTimestamp = tempFile.baseName().toLongLong();
-            if(abs(lastActualTimestamp - timestamp) < 750) {
-                // We're with 3/4s on either side of a dummy timestamp, assume this is it
-                entries.replace(i, Entry(fileName, bibNumber, timestamp + timeOffset));
-                break;
-            } else if(lastActualTimestamp - timestamp > 750) {
-                // Still potentially an entry before, continue going backwards
-                continue;
-            } else {
-                // Previous timestamp was a dummy, but our current timestamp is at least 3/4s greater than that, so we missed an entry
-                entries.append(Entry(fileName, bibNumber, timestamp + timeOffset));
-                break;
+        if(entries.back().timestamp > 0) {
+            // Not a dummy entry, just add it
+            entries.append(Entry(fileName, bibNumber, timestamp));
+            qDebug("just adding");
+        } else {
+            // Check through previous entries
+            qDebug("%d", entries.length());
+            for(int i = entries.length() - 1; i >= 0; i--) {
+                // If we no longer have a timestamp of 0, replace the previous one
+                if(entries.at(i).timestamp > 0) {
+                    qDebug("Replacing entry as current entry has a real timestamp");
+                    QFile::remove(entries.at(i + 1).file);
+                    entries.replace(i + 1, Entry(fileName, bibNumber, timestamp));
+                    break;
+                }
+
+                QFileInfo tempFile(QFile(entries.at(i).file));
+                qint64 lastFileTimestamp = tempFile.baseName().toLongLong();
+
+                if(lastFileTimestamp - timestamp < 750 && lastFileTimestamp - timestamp > 750) {
+                    // We're within 3/4s on either side of a dummy timestamp, assume this it
+                    // First, remove the old image
+                    QFile::remove(entries.at(i).file);
+                    entries.replace(i, Entry(fileName, bibNumber, timestamp));
+                    qDebug("Within 3/4s, replacing entry");
+                    break;
+                } else if(timestamp < lastFileTimestamp) {
+                    // Still potentially an entry before, continue going backwards
+                    continue;
+                } else {
+                    // Previous timestamp was a dummy, but our current timestamp is at least 3/4s greater than that, so we missed an entry
+                    int index = i + 1;
+                    if(index == entries.length()) {
+                        // Add it at the end
+                        entries.append(Entry(fileName, bibNumber, timestamp));
+                        qDebug("Adding new entry");
+                    } else {
+                        QFile toReplace(entries.at(index).file);
+                        entries.replace(index, Entry(fileName, bibNumber, timestamp));
+                        toReplace.remove();
+                        qDebug("Replacing entry, perhaps we missed one somewhere or clocks aren't in sync?");
+                    }
+                    break;
+                }
             }
         }
     } else {
