@@ -71,7 +71,7 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
         int numImages = temp->entries.length();
         if(numImages > maxNumberOfImages)
             maxNumberOfImages = numImages;
-        qint64 timestamp = temp->entries.at(i).timestamp;
+        qint64 timestamp = temp->entries.back().timestamp;
         if(timestamp > largestTimestamp)
             largestTimestamp = timestamp;
     }
@@ -465,14 +465,14 @@ void TimingPoint::incrementSliderMax() {
     } else {
         TimingCamera *temp = timingCameras.at(0);
         int maxEntries = temp->entries.length();
-        qint64 largestTimestamp = temp->entries.at(0).timestamp;
+        qint64 largestTimestamp = temp->entries.back().timestamp;
         for(int i = 1; i < numCameras; i++) {
             temp = timingCameras.at(i);
             int length = temp->entries.length();
             if(length > maxEntries) {
                 maxEntries = length;
             }
-            qint64 timestamp = temp->entries.at(i).timestamp;
+            qint64 timestamp = temp->entries.back().timestamp;
             if(timestamp > largestTimestamp)
                 largestTimestamp = timestamp;
         }
