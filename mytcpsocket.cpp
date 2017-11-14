@@ -50,7 +50,7 @@ void MyTcpSocket::process() {
         qint64 timestamp = bytesToLong(timeStampBytes);
         qDebug("reading timestamp %lld", timestamp);
         qint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
-        if(abs(now - timestamp) > 43200000) {
+        if(llabs(now - timestamp) > 43200000) {
             qDebug("Warning: Off by more than 12hrs.  Flushing...");
             socket->readAll();
             noError = false;
