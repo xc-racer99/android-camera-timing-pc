@@ -10,12 +10,15 @@ Pre-requisites
 
 - cmake
 - QT5
-- OpenCV 2 (OpenCV 3 will work, but you won't be able to use the training feature)
+- OpenCV 2 (OpenCV 3 may work, but you won't be able to use the training feature)
 - Boost
 - Tesseract
 - Leptonica
 
-Make sure you have the development packages installed as well.
+Make sure you have the development packages installed as well.  On Debian Stretch, run
+$ sudo apt install cmake qtcreator libqt5serialport5-dev libqt5widgets5 libqt5xml5
+$ sudo apt install tesseract-ocr-dev libleptonica-dev libopencv-dev
+$ sudo apt install libboost1.62-dev libboost-system1.62-dev libboost-filesystem1.62-dev
 
 Getting Started
 ---------------
