@@ -100,9 +100,9 @@ if(MINGW)
 #		DESTINATION licenses)
 
 	# gcc libraries - Fix-ME - these should probably not be hard-coded...
-	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libstdc++-6.dll
+	install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libstdc++-6.dll
 		DESTINATION .)
-	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libgcc_s_sjlj-1.dll
+	install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll
 		DESTINATION .)
 
 	# NSIS start menu links will point to executables in this directory
