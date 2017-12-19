@@ -94,10 +94,10 @@ if(MINGW)
 	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/tessdata
 		DESTINATION .)
 
-	# install license files
-	file(GLOB LICENSE_FILES "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright*.txt")
-	install(FILES "${LICENSE_FILES}"
-		DESTINATION licenses)
+	# install license files - FIXME - Make this actually work
+#	file(GLOB LICENSE_FILES "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright*.txt")
+#	install(FILES "${LICENSE_FILES}"
+#		DESTINATION licenses)
 
 	# gcc libraries - Fix-ME - these should probably not be hard-coded...
 	install(FILES /usr/lib/gcc/i686-w64-mingw32/5.3-win32/libstdc++-6.dll
