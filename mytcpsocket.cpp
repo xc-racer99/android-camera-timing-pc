@@ -52,7 +52,8 @@ void MyTcpSocket::process() {
         qint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
         if(llabs(now - timestamp) > 43200000) {
             qDebug("Warning: Off by more than 12hrs.  Flushing...");
-            socket->readAll();
+            while(socket->bytesAvailable() > 0)
+                socket->readAll();
             noError = false;
         }
 
@@ -78,7 +79,8 @@ void MyTcpSocket::process() {
 
                 if(file.size() != imageSize) {
                     qDebug("Warning: Sizes do not match. Flushing...");
-                    socket->readAll();
+                    while(socket->bytesAvailable() > 0)
+                        socket->readAll();
                     file.close();
                 } else {
                     emit newImage(file.fileName());
