@@ -31,14 +31,19 @@ path/to/source", followed by "make", followed by "cpack"
 Building on Linux for Windows:
 Use the superbuild project at https://github.com/xc-racer99/android-camera-timing-superbuild
 
-Other build configurations may be possible (eg for Mac OS X or on Windows
-for Windows), but have not been tested.
+Building without OCR:
+You can enable the "No_OCR" option (ie append "-DNo_OCR:BOOL=1" to the cmake command)
+or directly edit CMakeLists.txt.  This should make it possible to easily build most
+parts on Windows or on Mac OS X as you only need cmake and QT 5.
+
+Other full build configurations may be possible (eg for Mac OS X or on Windows
+for Windows), but have not been attempted.
 
 Training/Creating an SVM Model
 ------------------------------
 Use the bibnumber-cmd-line command line executable.  Then run:
 bibnumber-cmd-line -train dir_with_bib_number_images_only dir_with_full_images
-The resulting svm.xml file is your output.
+The resulting svm.xml file is your output.  Only available when OCR is built.
 
 License
 -------
