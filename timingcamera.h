@@ -23,9 +23,11 @@ public:
     QString getName(void);
     DetectText::TextDetectionParams getParams();
     qint64 getTimestampOffset(void);
+#ifndef NO_OCR
     void setAtBack(bool fromBehind);
-    void setTimestampOffset(qint64 offset);
     void setParams(DetectText::TextDetectionParams params);
+#endif
+    void setTimestampOffset(qint64 offset);
     void addBlankImage(qint64 time);
 
     struct Entry {
@@ -54,7 +56,9 @@ private:
     bool fromBack;
     float scaleFactor;
 
+#ifndef NO_OCR
     OcrPipeline *pipeline;
+#endif
 
     void adjustScrollBar(QScrollBar *scrollBar, double factor);
     void scaleImage(double factor);
@@ -69,6 +73,7 @@ public slots:
     void checkEntries(int numEntries, qint64 timestamp);
 private slots:
     void addNewImage(QString fileName, int bibNumber);
+    void addNewImageFromSocket(QString fileName);
     void changeSettings();
     void reconnectToServer();
     void setConnectionStatus(QString status);

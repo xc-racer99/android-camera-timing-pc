@@ -65,9 +65,11 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     for(int i = 0; i < cameras.length(); i++) {
         timingCameras.append(new TimingCamera(subDirectory + cameras.at(i).name, cameras.at(i).ip));
         TimingCamera *temp = timingCameras.last();
+#ifndef NO_OCR
         temp->setAtBack(cameras.at(i).atBack);
-        temp->setTimestampOffset(cameras.at(i).offset);
         temp->setParams(cameras.at(i).params);
+#endif
+        temp->setTimestampOffset(cameras.at(i).offset);
         int numImages = temp->entries.length();
         if(numImages > maxNumberOfImages)
             maxNumberOfImages = numImages;
@@ -230,9 +232,11 @@ TimingPoint::~TimingPoint() {
 }
 
 void TimingPoint::applyParams(DetectText::TextDetectionParams params) {
+#ifndef NO_OCR
     for(int i = 0; i < timingCameras.length(); i++) {
         timingCameras.at(i)->setParams(params);
     }
+#endif
 }
 
 void TimingPoint::submitButtonPushed() {

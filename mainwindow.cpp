@@ -86,7 +86,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Add the menu items to the file menu and it to the menu
     menubar->addAction(menuFile->menuAction());
     menubar->addAction(menuSummit->menuAction());
+#ifndef NO_OCR
     menubar->addAction(ocrSettings->menuAction());
+#endif
     menubar->addAction(helpMenu->menuAction());
     menuFile->addAction(actionNewTimingPoint);
     menuFile->addAction(actionQuit);

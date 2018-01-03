@@ -7,6 +7,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
+# Option to completely disable all OCR
+OPTION(No_OCR "Disable compiling in OCR" OFF)
+
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -18,6 +21,10 @@ else()
 	message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+# Add the libcrc directory
+include_directories ("${PROJECT_SOURCE_DIR}/3rd-Party/libcrc/include")
+add_subdirectory (3rd-Party/libcrc)
+
 # Find the QtWidgets library
 find_package(Qt5Widgets)
 find_package(Qt5Network)
@@ -27,22 +34,25 @@ find_package(Qt5Xml)
 # Add resources
 qt5_add_resources(UI_RESOURCES images.qrc)
 
-# Add the libcrc directory
-include_directories ("${PROJECT_SOURCE_DIR}/3rd-Party/libcrc/include")
-add_subdirectory (3rd-Party/libcrc)
-
-# Add bibnumber
-include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
-add_subdirectory(3rd-Party/bibnumber)
-
 # Source files
 set(CameraTiming_SRCs
 	main.cpp
 	mainwindow.cpp mytcpsocket.cpp
-	ocrpipeline.cpp summitemulator.cpp
+	summitemulator.cpp
 	timingcamera.cpp timingpoint.cpp
 	${UI_RESOURCES})
 
+if(${No_OCR})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_OCR")
+else()
+	# Add bibnumber
+	include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
+	add_subdirectory(3rd-Party/bibnumber)
+
+	set(CameraTiming_SRCs "${CameraTiming_SRCs}" ocrpipeline.cpp)
+endif()
+
+# Windows Icon
 if(WIN32)
 	enable_language(RC)
 	configure_file(images/icon.ico ${CMAKE_CURRENT_BINARY_DIR}/icon.ico COPYONLY)
@@ -53,13 +63,14 @@ endif()
 add_executable(AndroidCameraTiming
 	${CameraTiming_SRCs})
 
-target_link_libraries (AndroidCameraTiming bibnumber LibCRC)
+target_link_libraries (AndroidCameraTiming LibCRC)
 
-# Use the Widgets module from Qt 5.
-target_link_libraries(AndroidCameraTiming Qt5::Widgets)
-target_link_libraries(AndroidCameraTiming Qt5::Network)
-target_link_libraries(AndroidCameraTiming Qt5::SerialPort)
-target_link_libraries(AndroidCameraTiming Qt5::Xml)
+if(NOT ${No_OCR})
+	target_link_libraries (AndroidCameraTiming bibnumber)
+endif()
+
+# Include the needed QT5 modules
+target_link_libraries(AndroidCameraTiming Qt5::Xml Qt5::SerialPort Qt5::Widgets Qt5::Network)
 
 # build a CPack driven installer package
 include (InstallRequiredSystemLibraries)
@@ -99,7 +110,7 @@ if(MINGW)
 #	install(FILES "${LICENSE_FILES}"
 #		DESTINATION licenses)
 
-	# gcc libraries - Fix-ME - these should probably not be hard-coded...
+	# gcc libraries - FIXME - these should probably not be hard-coded...
 	install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libstdc++-6.dll
 		DESTINATION .)
 	install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll

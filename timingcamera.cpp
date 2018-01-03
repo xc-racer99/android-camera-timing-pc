@@ -135,6 +135,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
         entries.append(Entry(initialFileInfo.at(i).absoluteFilePath(), 0, timestamp));
     }
 
+#ifndef NO_OCR
     // Start the OCR
     pipeline = new OcrPipeline(directory, fromBack);
     QThread *thread = new QThread();
@@ -147,6 +148,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     connect(pipeline, SIGNAL(newImage(QString,int)), this, SLOT(addNewImage(QString,int)));
 
     thread->start();
+#endif
 
     // Start the image saving thread
     startBackgroundThread();
@@ -156,7 +158,9 @@ TimingCamera::~TimingCamera() {
     delete ipAddress;
     delete statusBox;
     delete imageHolder;
+#ifndef NO_OCR
     pipeline->stopThread();
+#endif
 }
 
 void TimingCamera::addBlankImage(qint64 time) {
@@ -165,6 +169,7 @@ void TimingCamera::addBlankImage(qint64 time) {
     entries.append(Entry(newName, 0, 0));
 }
 
+#ifndef NO_OCR
 void TimingCamera::setAtBack(bool fromBehind) {
     fromBack = fromBehind;
     pipeline->setFromBehind(fromBehind);
@@ -173,6 +178,7 @@ void TimingCamera::setAtBack(bool fromBehind) {
 void TimingCamera::setParams(DetectText::TextDetectionParams params) {
     pipeline->setParams(params);
 }
+#endif
 
 void TimingCamera::setTimestampOffset(qint64 offset) {
     timeOffset = offset;
@@ -192,7 +198,24 @@ QString TimingCamera::getName() {
 }
 
 DetectText::TextDetectionParams TimingCamera::getParams() {
+#ifdef NO_OCR
+    // Default params
+    DetectText::TextDetectionParams params = { true, /* darkOnLight */
+                15, /* maxStrokeLength */
+                11, /* minCharacterHeight */
+                100, /* maxImgWidthToTextRatio */
+                45, /* maxAngle */
+                10, /* topBorder: discard top 10% */
+                5,  /* bottomBorder: discard bottom 5% */
+                3, /* min chain len */
+                0, /* verify with SVM model up to this chain len */
+                0, /* height needs to be this large to verify with model */
+                false /* use new chaining code */
+    };
+    return params;
+#else
     return pipeline->getParams();
+#endif
 }
 
 qint64 TimingCamera::getTimestampOffset() {
@@ -219,6 +242,7 @@ void TimingCamera::changeSettings() {
     offsetLineEdit->setText(QString("%1").arg(timeOffset));
     layout->addRow(offsetLabel, offsetLineEdit);
 
+#ifndef NO_OCR
     QCheckBox *atBack = new QCheckBox(dialog);
     atBack->setText(tr("From Behind?"));
     atBack->setChecked(fromBack);
@@ -308,6 +332,7 @@ void TimingCamera::changeSettings() {
     QLabel *applyToAllLabel = new QLabel(dialog);
     applyToAllLabel->setText(tr("Apply To All Cameras"));
     paramsLayout->addRow(applyToAllLabel, applyToAll);
+#endif
 
     // Buttons
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
@@ -321,8 +346,10 @@ void TimingCamera::changeSettings() {
     connect(&buttonBox, SIGNAL(rejected()), dialog, SLOT(reject()));
 
     if(dialog->exec() == QDialog::Accepted) {
-        setAtBack(atBack->checkState());
         setTimestampOffset(offsetLineEdit->text().toLongLong());
+
+#ifndef NO_OCR
+        setAtBack(atBack->checkState());
 
         // Params
         DetectText::TextDetectionParams newParams = {
@@ -359,6 +386,7 @@ void TimingCamera::changeSettings() {
             emit applyParamsElsewhere(newParams);
         else
             pipeline->setParams(newParams);
+#endif
 
         emit settingsChanged();
     }
@@ -382,11 +410,16 @@ void TimingCamera::startBackgroundThread() {
 
     // Connect signals and slots
     connect(socket, SIGNAL(serverStatus(QString)), this, SLOT(setConnectionStatus(QString)));
-    connect(socket, SIGNAL(newImage(QString)), pipeline, SLOT(addImage(QString)));
     connect(networkThread, SIGNAL(started()), socket, SLOT(process()));
     connect(socket, SIGNAL(finished()), networkThread, SLOT(quit()));
     connect(socket, SIGNAL(finished()), socket, SLOT(deleteLater()));
     connect(networkThread, SIGNAL(finished()), networkThread, SLOT(deleteLater()));
+
+#ifdef NO_OCR
+    connect(socket, SIGNAL(newImage(QString)), this, SLOT(addNewImageFromSocket(QString)));
+#else
+    connect(socket, SIGNAL(newImage(QString)), pipeline, SLOT(addImage(QString)));
+#endif
 
     // Start the thread
     networkThread->start();
@@ -423,6 +456,10 @@ void TimingCamera::changeImage(int index) {
     scaleFactor = 1.0;
 
     actualImage->resize(500, newHeight);
+}
+
+void TimingCamera::addNewImageFromSocket(QString fileName) {
+    addNewImage(fileName, 0);
 }
 
 void TimingCamera::addNewImage(QString fileName, int bibNumber) {
