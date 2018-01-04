@@ -11,7 +11,11 @@
 #include <QSlider>
 #include <QWidget>
 
+#ifdef NO_OCR
+#include "ocrpipeline.h"
+#else
 #include "3rd-Party/bibnumber/textdetection.h"
+#endif
 
 #include "timingcamera.h"
 

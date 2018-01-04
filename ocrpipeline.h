@@ -5,8 +5,26 @@
 #include <QQueue>
 #include <QString>
 
+#ifndef NO_OCR
 #include "3rd-Party/bibnumber/pipeline.h"
 #include "3rd-Party/bibnumber/textdetection.h"
+#else
+namespace DetectText {
+struct TextDetectionParams {
+    bool darkOnLight;
+    int maxStrokeLength;
+    int minCharacterheight;
+    float maxImgWidthToTextRatio;
+    float maxAngle;
+    int topBorder;
+    int bottomBorder;
+    unsigned int minChainLen;
+    int modelVerifLenCrit;
+    int modelVerifMinHeight;
+    bool useOriginalChainCode;
+};
+}
+#endif
 
 class OcrPipeline : public QObject
 {
@@ -23,7 +41,9 @@ private:
     bool fromBehind;
     bool running;
 
+#ifndef NO_OCR
     pipeline::Pipeline pipeline;
+#endif
 
     DetectText::TextDetectionParams params;
 signals:
