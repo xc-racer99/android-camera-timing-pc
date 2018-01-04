@@ -29,25 +29,47 @@ MyTcpSocket::MyTcpSocket(QString host, QString dir)
     directory = dir;
 }
 
+qint64 MyTcpSocket::readLong() {
+    while(socket->isOpen() && socket->waitForReadyRead(5000) && socket->bytesAvailable() < 8)
+        true;
+    qDebug("Bytes available %d", socket->bytesAvailable());
+    return bytesToLong(socket->read(8));
+}
+
+void MyTcpSocket::sendCommand(qint64 cmd) {
+    char buf[8];
+    longToBytes(cmd, buf);
+    socket->write(buf);
+    socket->flush();
+}
+
 void MyTcpSocket::process() {
     emit serverStatus("Connecting");
     socket = new QTcpSocket(this);
     socket->connectToHost(hostName, 54321);
 
-    if(socket->waitForConnected(50000)) {
+    if(socket->waitForConnected(5000)) {
         qDebug() << tr("Connected %1").arg(hostName);
         emit serverStatus("Connected");
     } else {
         qDebug() << tr("Failed to connect to %1").arg(hostName);
     }
-    while(socket->isOpen() && socket->waitForReadyRead(-1)) {
+    while(socket->isOpen()) {
         bool noError = true;
 
-        // Read the first 64 bits - timestamp
-        while(socket->isOpen() && socket->waitForReadyRead(5000) && socket->bytesAvailable() < 8)
-            true;
-        QByteArray timeStampBytes = socket->read(8);
-        qint64 timestamp = bytesToLong(timeStampBytes);
+        // Send the "Next Image" command
+        sendCommand(PC_REQUEST_NEXT);
+
+        // Make sure we're receiving what we want to
+        int cmd = readLong();
+        if(cmd != PHONE_IMAGE)
+            noError = false;
+
+        // Read image ID, ignored for now
+        qint64 imageId = readLong();
+
+        // Read timestamp and make sure it's sane
+        qint64 timestamp = readLong();
         qDebug("reading timestamp %lld", timestamp);
         qint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
         if(llabs(now - timestamp) > 43200000) {
@@ -57,37 +79,33 @@ void MyTcpSocket::process() {
             noError = false;
         }
 
-        // Read the next 64 bits - the size of the image
-        if(socket->isOpen() && socket->waitForReadyRead(5000) && noError) {
-            while(socket->isOpen() && socket->waitForReadyRead(-1) && socket->bytesAvailable() < 8)
-                true;
-            QByteArray imageSizeBytes = socket->read(8);
-            qint64 imageSize = bytesToLong(imageSizeBytes);
-            qDebug("file size is %lld", imageSize);
+        // Read file size
+        qint64 imageSize = readLong();
+        qDebug("file size is %lld", imageSize);
 
-            if(socket->waitForReadyRead(-1)) {
-                // Actually read the image and save to a file
-                QFile file(directory + QString::number(timestamp) + ".jpg");
+        // Actually read the image and save to a file
+        QFile file(directory + QString::number(timestamp) + ".jpg");
 
-                qDebug("Saving to file %s", file.fileName().toLatin1().constData());
-                file.open(QIODevice::WriteOnly);
+        qDebug("Saving to file %s", file.fileName().toLatin1().constData());
+        file.open(QIODevice::WriteOnly);
 
-                qint64 bytesLeft = imageSize;
-                while(bytesLeft > 0 && (socket->bytesAvailable() || socket->waitForReadyRead(5000))) {
-                    bytesLeft -= file.write(socket->read(bytesLeft));
-                }
-
-                if(file.size() != imageSize) {
-                    qDebug("Warning: Sizes do not match. Flushing...");
-                    while(socket->bytesAvailable() > 0)
-                        socket->readAll();
-                    file.close();
-                } else {
-                    emit newImage(file.fileName());
-                    file.close();
-                }
-            }
+        qint64 bytesLeft = imageSize;
+        while(bytesLeft > 0 && (socket->bytesAvailable() || socket->waitForReadyRead(5000))) {
+            bytesLeft -= file.write(socket->read(bytesLeft));
         }
+
+        if(file.size() != imageSize) {
+            qDebug("Warning: Sizes do not match. Flushing...");
+            while(socket->bytesAvailable() > 0)
+                socket->readAll();
+            file.close();
+        } else {
+            emit newImage(file.fileName());
+            file.close();
+        }
+
+        // Send ACK
+        sendCommand(PC_ACK);
     }
     emit serverStatus("Disconnected");
     emit finished();
@@ -100,4 +118,11 @@ qint64 MyTcpSocket::bytesToLong(QByteArray b) {
         result |= (b.at(i) & 0xFF);
     }
     return result;
+}
+
+void MyTcpSocket::longToBytes(qint64 l, char* result) {
+    for (int i = 7; i >= 0; i--) {
+        result[i] = (char)(l & 0xFF);
+        l >>= 8;
+    }
 }
