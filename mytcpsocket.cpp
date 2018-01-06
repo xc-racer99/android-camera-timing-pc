@@ -23,23 +23,26 @@
 
 #include "mytcpsocket.h"
 
-MyTcpSocket::MyTcpSocket(QString host, QString dir)
-{
+MyTcpSocket::MyTcpSocket(QString host, QString dir) {
     hostName = host;
     directory = dir;
 }
 
 qint64 MyTcpSocket::readLong() {
-    while(socket->isOpen() && socket->waitForReadyRead(5000) && socket->bytesAvailable() < 8)
-        true;
-    qDebug("Bytes available %d", socket->bytesAvailable());
+    qDebug("Reading long");
+
+    // FIXME have a timouet here too
+    while(socket->isOpen() && socket->bytesAvailable() < 8) {
+        qDebug("Bytes available %d", socket->bytesAvailable());
+        QThread::sleep(1);
+    }
     return bytesToLong(socket->read(8));
 }
 
 void MyTcpSocket::sendCommand(qint64 cmd) {
     char buf[8];
     longToBytes(cmd, buf);
-    socket->write(buf);
+    socket->write(buf, 8);
     socket->flush();
 }
 
@@ -54,14 +57,30 @@ void MyTcpSocket::process() {
     } else {
         qDebug() << tr("Failed to connect to %1").arg(hostName);
     }
-    while(socket->isOpen()) {
+
+    // Try sending our initial command
+    sendCommand(PC_REQUEST_NEXT);
+
+    while(socket->isOpen() && (socket->bytesAvailable() > 0 || socket->waitForReadyRead(5000))) {
         bool noError = true;
 
-        // Send the "Next Image" command
-        sendCommand(PC_REQUEST_NEXT);
+        qDebug("Got here 0");
 
         // Make sure we're receiving what we want to
         int cmd = readLong();
+
+        // Check if we're receiving data or not
+        if(cmd == NO_DATA) {
+            qDebug("No data available, trying again");
+            sendCommand(PC_ACK);
+            QThread::sleep(1);
+
+            // Try sending our next command
+            sendCommand(PC_REQUEST_NEXT);
+
+            continue;
+        }
+
         if(cmd != PHONE_IMAGE)
             noError = false;
 
@@ -106,7 +125,11 @@ void MyTcpSocket::process() {
 
         // Send ACK
         sendCommand(PC_ACK);
+
+        // Try sending our next command
+        sendCommand(PC_REQUEST_NEXT);
     }
+    qDebug("Disconnected");
     emit serverStatus("Disconnected");
     emit finished();
 }
