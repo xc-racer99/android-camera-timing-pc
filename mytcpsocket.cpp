@@ -29,11 +29,11 @@ MyTcpSocket::MyTcpSocket(QString host, QString dir) {
 }
 
 qint64 MyTcpSocket::readLong() {
-    qDebug("Reading long");
+    int start = QTime::currentTime().msecsSinceStartOfDay();
 
-    // FIXME have a timouet here too
     while(socket->isOpen() && socket->bytesAvailable() < 8) {
-        qDebug("Bytes available %d", socket->bytesAvailable());
+        if(QTime::currentTime().msecsSinceStartOfDay() - start > 6000)
+            return -1;
         QThread::sleep(1);
     }
     return bytesToLong(socket->read(8));
@@ -70,7 +70,10 @@ void MyTcpSocket::process() {
         int cmd = readLong();
 
         // Check if we're receiving data or not
-        if(cmd == NO_DATA) {
+        if(cmd == -1) {
+            qDebug("Failed to read command!");
+            break;
+        } else if(cmd == NO_DATA) {
             qDebug("No data available, trying again");
             sendCommand(PC_ACK);
             QThread::sleep(1);
@@ -79,28 +82,34 @@ void MyTcpSocket::process() {
             sendCommand(PC_REQUEST_NEXT);
 
             continue;
+        } else if(cmd != PHONE_IMAGE) {
+            qDebug("Unkown command - closing socket");
+            break;
         }
-
-        if(cmd != PHONE_IMAGE)
-            noError = false;
 
         // Read image ID, ignored for now
         qint64 imageId = readLong();
+
+        if(imageId == -1) {
+            qDebug("Failed to read image Id");
+            break;
+        }
 
         // Read timestamp and make sure it's sane
         qint64 timestamp = readLong();
         qDebug("reading timestamp %lld", timestamp);
         qint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
         if(llabs(now - timestamp) > 43200000) {
-            qDebug("Warning: Off by more than 12hrs.  Flushing...");
-            while(socket->bytesAvailable() > 0)
-                socket->readAll();
-            noError = false;
+            qDebug("Warning: Timestamp off by more than 12hrs.  Closing socket");
+            break;
         }
 
         // Read file size
         qint64 imageSize = readLong();
-        qDebug("file size is %lld", imageSize);
+        if(imageSize == -1) {
+            qDebug("Failed to read image size");
+            break;
+        }
 
         // Actually read the image and save to a file
         QFile file(directory + QString::number(timestamp) + ".jpg");
