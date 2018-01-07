@@ -53,6 +53,8 @@ private:
     QString directory;
     qint64 timeOffset;
 
+    int currentIndex;
+    qint64 currentTimestamp;
     bool fromBack;
     float scaleFactor;
 

@@ -45,6 +45,9 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     scaleFactor = 1.0;
 
+    currentIndex = 0;
+    currentTimestamp = 0;
+
     fromBack = false;
 
     timeOffset = 0;
@@ -430,6 +433,14 @@ void TimingCamera::changeImage(int index) {
         qDebug("Warning: Index is greater than permissible");
         index = 0;
     }
+
+    // Check and see if this is already displayed or not
+    if(index == currentIndex && currentTimestamp != 0)
+        return;
+
+    // Set our current index and timestamp
+    currentIndex = index;
+    currentTimestamp = entries.at(index).timestamp;
 
     QImageReader reader(entries.at(index).file);
     reader.setAutoTransform(true);
