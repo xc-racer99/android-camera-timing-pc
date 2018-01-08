@@ -56,6 +56,7 @@ private:
     int currentIndex;
     qint64 currentTimestamp;
     bool fromBack;
+    int imgWidth;
     float scaleFactor;
 
 #ifndef NO_OCR

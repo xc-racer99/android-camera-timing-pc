@@ -18,6 +18,7 @@
 
 #include <QCheckBox>
 #include <QDateTime>
+#include <QDesktopWidget>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -47,6 +48,10 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
 
     currentIndex = 0;
     currentTimestamp = 0;
+
+    // The desired width of the individual images - 7/20 of total monitor width
+    QDesktopWidget widget;
+    imgWidth = widget.availableGeometry(widget.primaryScreen()).width() * (7.0 / 20.0);
 
     fromBack = false;
 
@@ -102,7 +107,7 @@ TimingCamera::TimingCamera(QString dir, QString ip, QObject *parent) : QObject(p
     scrollArea = new QScrollArea(imageHolder);
     scrollArea->setWidget(actualImage);
     scrollArea->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-    scrollArea->setFixedWidth(512);
+    scrollArea->setFixedWidth(imgWidth + 10);
     scrollArea->setBackgroundRole(QPalette::Base);
 
     layout->addWidget(scrollArea, 0, 0, 1, 3);
@@ -447,9 +452,9 @@ void TimingCamera::changeImage(int index) {
 
     QImage image = reader.read();
 
-    // Scale the image up if the width is smaller than 500px
-    if(image.width() < 500)
-        image = image.scaledToWidth(500);
+    // Scale the image up if the width is smaller than desired width
+    if(image.width() < imgWidth)
+        image = image.scaledToWidth(imgWidth);
 
     // Overlay the timestamp on the image
     QDateTime time = QDateTime::fromMSecsSinceEpoch(entries.at(index).timestamp);
@@ -460,13 +465,13 @@ void TimingCamera::changeImage(int index) {
     delete(painter);
 
     // Re-size the scroll area
-    int newHeight = qRound((float)image.height()/(float)image.width()*500.0);
+    int newHeight = qRound((float)image.height()/(float)image.width()*(float)imgWidth);
     scrollArea->setFixedHeight(newHeight + 12);
 
     actualImage->setPixmap(QPixmap::fromImage(image));
     scaleFactor = 1.0;
 
-    actualImage->resize(500, newHeight);
+    actualImage->resize(imgWidth, newHeight);
 }
 
 void TimingCamera::addNewImageFromSocket(QString fileName) {
