@@ -8,7 +8,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 # Option to completely disable all OCR
-OPTION(No_OCR "Disable compiling in OCR" OFF)
+OPTION(No_OCR "Disable compiling in OCR" ON)
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)

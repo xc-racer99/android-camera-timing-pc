@@ -1,4 +1,3 @@
-
 Camera Timing for Android - PC
 ===================================
 
@@ -8,8 +7,11 @@ https://github.com/xc-racer99/android-camera-timing
 Pre-requisites
 --------------
 
+For a basic build
 - cmake
 - QT5
+
+For the experimental OCR
 - OpenCV 2 (OpenCV 3 may work, but you won't be able to use the training feature)
 - Boost
 - Tesseract
@@ -28,16 +30,19 @@ Building on Linux for Linux:
 Create a build directory.  Change into it, and run "cmake
 path/to/source", followed by "make", followed by "cpack"
 
+Building on Windows for Windows
+Install cmake and QT Creator along with your desired version of QT.
+Building a package has not been tested, only debug builds.
+
 Building on Linux for Windows:
 Use the superbuild project at https://github.com/xc-racer99/android-camera-timing-superbuild
 
-Building without OCR:
-You can enable the "No_OCR" option (ie append "-DNo_OCR:BOOL=1" to the cmake command)
-or directly edit CMakeLists.txt.  This should make it possible to easily build most
-parts on Windows or on Mac OS X as you only need cmake and QT 5.
+Building with OCR:
+You can disable the "No_OCR" option (ie append "-DNo_OCR:BOOL=0" to the cmake command)
+or directly edit CMakeLists.txt.  Note that the OCR has not been tested in the field
+and may not be very reliable at all
 
-Other full build configurations may be possible (eg for Mac OS X or on Windows
-for Windows), but have not been attempted.
+Other full build configurations may be possible (eg for Mac OS X), but have not been attempted.
 
 Training/Creating an SVM Model
 ------------------------------
