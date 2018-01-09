@@ -14,11 +14,11 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-	message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 # Add the libcrc directory
@@ -36,37 +36,37 @@ qt5_add_resources(UI_RESOURCES images.qrc)
 
 # Source files
 set(CameraTiming_SRCs
-	main.cpp
-	mainwindow.cpp mytcpsocket.cpp
-	summitemulator.cpp
-	timingcamera.cpp timingpoint.cpp
-	${UI_RESOURCES})
+    main.cpp
+    mainwindow.cpp mytcpsocket.cpp
+    summitemulator.cpp
+    timingcamera.cpp timingpoint.cpp
+    ${UI_RESOURCES})
 
 if(${No_OCR})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_OCR")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_OCR")
 else()
-	# Add bibnumber
-	include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
-	add_subdirectory(3rd-Party/bibnumber)
+    # Add bibnumber
+    include_directories("${PROJECT_SOURCE_DIR}/3rd-Party/bibnumber")
+    add_subdirectory(3rd-Party/bibnumber)
 
-	set(CameraTiming_SRCs "${CameraTiming_SRCs}" ocrpipeline.cpp)
+    set(CameraTiming_SRCs "${CameraTiming_SRCs}" ocrpipeline.cpp)
 endif()
 
 # Windows Icon
 if(WIN32)
-	enable_language(RC)
-	configure_file(images/icon.ico ${CMAKE_CURRENT_BINARY_DIR}/icon.ico COPYONLY)
-	list(APPEND CameraTiming_SRCs windows_icon.rc)
+    enable_language(RC)
+    configure_file(images/icon.ico ${CMAKE_CURRENT_BINARY_DIR}/icon.ico COPYONLY)
+    list(APPEND CameraTiming_SRCs windows_icon.rc)
 endif()
 
 # Tell CMake to create the executable
 add_executable(AndroidCameraTiming
-	${CameraTiming_SRCs})
+    ${CameraTiming_SRCs})
 
 target_link_libraries (AndroidCameraTiming LibCRC)
 
 if(NOT ${No_OCR})
-	target_link_libraries (AndroidCameraTiming bibnumber)
+    target_link_libraries (AndroidCameraTiming bibnumber)
 endif()
 
 # Include the needed QT5 modules
@@ -80,45 +80,72 @@ set (CPACK_PACKAGE_VERSION_MAJOR 0)
 set (CPACK_PACKAGE_VERSION_MINOR 2)
 
 install(TARGETS AndroidCameraTiming
-	RUNTIME
-	DESTINATION .)
+    RUNTIME
+    DESTINATION .)
 
 # install licensing file
 install(FILES COPYING DESTINATION licenses
-	RENAME "Main Program.txt")
+    RENAME "Main Program.txt")
 
-if(MINGW)
-	# package the needed libraries, superbuild installs them into ${PROJECT_BINARY_DIR}
-	file(GLOB DLLs ${PROJECT_BINARY_DIR}/../install/ProgramFiles/bin/*.dll)
-	install(FILES ${DLLs}
-		DESTINATION .)
+if(MINGW AND CMAKE_HOST_UNIX)
+    # package the needed libraries, superbuild installs them into ${PROJECT_BINARY_DIR}
+    file(GLOB DLLs ${PROJECT_BINARY_DIR}/../install/ProgramFiles/bin/*.dll)
+    install(FILES ${DLLs}
+        DESTINATION .)
 
-	# other qt files
-	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/plugins
-		DESTINATION .)
+    # other qt files
+    install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/plugins
+        DESTINATION .)
 
-	# qt.conf so it finds the plugins
-	install(FILES qt.conf
-		DESTINATION .)
+    # qt.conf so it finds the plugins
+    install(FILES qt.conf
+        DESTINATION .)
 
-	# install tessdata directory
-	install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/tessdata
-		DESTINATION .)
+    # install tessdata directory
+    install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/tessdata
+        DESTINATION .)
 
-	# install license files - FIXME - Make this actually work
-#	file(GLOB LICENSE_FILES "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright*.txt")
-#	install(FILES "${LICENSE_FILES}"
-#		DESTINATION licenses)
+    # install license files - FIXME - Make this actually work
+#    file(GLOB LICENSE_FILES "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright*.txt")
+#    install(FILES "${LICENSE_FILES}"
+#        DESTINATION licenses)
 
-	# gcc libraries - FIXME - these should probably not be hard-coded...
-	install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libstdc++-6.dll
-		DESTINATION .)
-	install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll
-		DESTINATION .)
+    # gcc libraries - FIXME - these should probably not be hard-coded...
+    install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libstdc++-6.dll
+        DESTINATION .)
+    install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll
+        DESTINATION .)
+else(WIN32 AND CMAKE_HOST_WIN32)
+    # Building on Windows for Windows
 
-	# NSIS start menu links will point to executables in this directory
-	set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-	set(CPACK_PACKAGE_EXECUTABLES "AndroidCameraTiming;Camera Timing for Android - PC")
+    # Run windeployqt
+    get_target_property(QT5_QMAKE_EXECUTABLE Qt5::qmake IMPORTED_LOCATION)
+    get_filename_component(QT5_WINDEPLOYQT_EXECUTABLE ${QT5_QMAKE_EXECUTABLE} PATH)
+    set(QT5_WINDEPLOYQT_EXECUTABLE "${QT5_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
+    add_custom_command(TARGET AndroidCameraTiming POST_BUILD
+        COMMAND ${QT5_WINDEPLOYQT_EXECUTABLE} --release $<TARGET_FILE:AndroidCameraTiming>)
+
+    # Install dlls
+    # FIXME In order for the GLOB to work, the files must exist _before_ cmake is run
+    # When packaging, re-run cmake first as a workaround
+    file(GLOB DLLs )
+    install(FILES ${PROJECT_BINARY_DIR}/*.dll
+        DESTINATION .)
+
+    # other qt directories
+    install(DIRECTORY ${PROJECT_BINARY_DIR}/bearer
+        ${PROJECT_BINARY_DIR}/iconengines
+        ${PROJECT_BINARY_DIR}/imageformats
+        ${PROJECT_BINARY_DIR}/platforms
+        ${PROJECT_BINARY_DIR}/styles
+        ${PROJECT_BINARY_DIR}/translations
+        DESTINATION .)
+endif()
+
+if(WIN32)
+    # NSIS start menu links will point to executables in this directory
+    set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+    set(CPACK_PACKAGE_EXECUTABLES "AndroidCameraTiming;Camera Timing for Android - PC")
 endif()
 
 include (CPack)
