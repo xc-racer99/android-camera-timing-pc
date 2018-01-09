@@ -71,6 +71,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QAction *svmModel = new QAction(this);
     QMenu *helpMenu = new QMenu(this);
     QAction *licensesAction = new QAction(this);
+    QAction *aboutQtAction = helpMenu->addAction(tr("About &Qt"), this, &QApplication::aboutQt);
+    aboutQtAction->setStatusTip(tr("Show the Qt library's About box"));
 
     // Set the text
     actionNewTimingPoint->setText("New Timing Point");
