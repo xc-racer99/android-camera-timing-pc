@@ -84,7 +84,7 @@ install(TARGETS AndroidCameraTiming
     DESTINATION .)
 
 # install licensing file
-install(FILES COPYING DESTINATION licenses
+install(FILES COPYING DESTINATION copyright
     RENAME "Main Program.txt")
 
 if(MINGW AND CMAKE_HOST_UNIX)
@@ -105,10 +105,9 @@ if(MINGW AND CMAKE_HOST_UNIX)
     install(DIRECTORY ${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/tessdata
         DESTINATION .)
 
-    # install license files - FIXME - Make this actually work
-#    file(GLOB LICENSE_FILES "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright*.txt")
-#    install(FILES "${LICENSE_FILES}"
-#        DESTINATION licenses)
+    # install license files
+    install(DIRECTORY "${PROJECT_BINARY_DIR}/../install/ProgramFiles/share/doc/copyright"
+        DESTINATION .)
 
     # Determine location libgcc and libstdc++ and install them
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-libgcc-file-name OUTPUT_VARIABLE STATIC_LIBGCC_PATH)

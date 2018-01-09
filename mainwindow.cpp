@@ -242,7 +242,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 }
 
 void MainWindow::licenses() {
-    QDir dir("licenses");
+    QDir dir("copyright");
     QStringList filters;
     filters.append("*.txt");
     QFileInfoList licenses = dir.entryInfoList(filters, QDir::Files);
