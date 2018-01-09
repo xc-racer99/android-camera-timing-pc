@@ -203,9 +203,6 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
     // Make sure all the cameras have the same number of images
     emit checkEntries(maxNumberOfImages, largestTimestamp);
 
-    // Trigger change to image
-    imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
-
     // Create the csv file that we read from and write to
     csvFile = new QFile(subDirectory + "output.csv");
 
@@ -219,11 +216,15 @@ TimingPoint::TimingPoint(QString directory, QString name, QList<CameraInfo> came
             list = line.split(',', QString::SkipEmptyParts);
             if (list.length() == 2) {
                 hash.insert(list.at(0), list.at(1));
+                bibsUsed.append(list.at(1));
             }
         }
     }
     csvFile->close();
     csvFile->open(QFile::Append);
+
+    // Trigger change to image
+    imageSlider->triggerAction(QAbstractSlider::SliderToMaximum);
 }
 
 TimingPoint::~TimingPoint() {
@@ -239,19 +240,50 @@ void TimingPoint::applyParams(DetectText::TextDetectionParams params) {
 #endif
 }
 
+QString TimingPoint::getBibs(QTime time) {
+    QString bibNumbers;
+    bool noneFound = false;
+    int k = 0;
+    while(!noneFound) {
+        QString temp = hash[roundTime(time, k)];
+        if(temp.isEmpty())
+            break;
+        if(k != 0)
+            bibNumbers.append(',');
+        bibNumbers = bibNumbers + temp;
+        k++;
+    }
+    return bibNumbers;
+}
+
 void TimingPoint::submitButtonPushed() {
-    bool write = true;
+    // Make sure we haven't tried using this time already
+    QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
+    QString prevBibs = getBibs(time);
+    if(!prevBibs.isEmpty()) {
+        // Check if we've already inputed this exact text
+        if(prevBibs == bibNumEdit->text()) {
+            return;
+        }
 
-    // Write the time and bib number to the CSV
-    QString bibNumber = bibNumEdit->text();
+        // We've used this timestamp, warn
+        QMessageBox *msgBox = new QMessageBox(this);
+        msgBox->setText(QString("This timestamp has already been used for bib(s) %1.  Continue?").arg(prevBibs));
+        msgBox->setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+        int ret = msgBox->exec();
+        if(ret == QMessageBox::No) {
+            bibNumEdit->setText(prevBibs);
+            delete msgBox;
+            return;
+        } else {
+            delete msgBox;
+        }
+    }
 
-    // Divide up the bib numbers if there's multiple separated by a comma
-    QStringList bibNums = bibNumber.split(',', QString::SkipEmptyParts);
-
-    QTextStream out(csvFile);
+    // Check if we've already written any of these bib numbers the maximum number of times
+    QStringList bibNums = bibNumEdit->text().split(',', QString::SkipEmptyParts);
     for(int i = 0; i < bibNums.length(); i++) {
         QString bibnum = bibNums.at(i);
-        // Check if we've already written this bib number the maximum number of times
         int views = 0;
         for(int j = 0; j < bibsUsed.length(); j++) {
             if(bibsUsed.at(j) == bibnum)
@@ -259,11 +291,11 @@ void TimingPoint::submitButtonPushed() {
             if(views == maxViews) {
                 // We've seen this bib the max number of times, make sure we want to continue
                 QMessageBox *msgBox = new QMessageBox(this);
-                msgBox->setText("This bib has already been entered the maximum number of times.  Continue?");
+                msgBox->setText(QString("This bib (%1) has already been entered the maximum number of times.  Continue?").arg(bibnum));
                 msgBox->setStandardButtons(QMessageBox::Yes|QMessageBox::No);
                 int ret = msgBox->exec();
                 if(ret == QMessageBox::No) {
-                    write = false;
+                    bibNumEdit->setText(prevBibs);
                     delete msgBox;
                     return;
                 } else {
@@ -272,43 +304,27 @@ void TimingPoint::submitButtonPushed() {
                 }
             }
         }
-
-        if(write) {
-            QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
-            QString actualTime = roundTime(time, i);
-
-            // Make sure we haven't tried using this time already
-            QString prevBib = hash[actualTime];
-            if(!prevBib.isEmpty()) {
-                // We've used this timestamp, warn
-                QMessageBox *msgBox = new QMessageBox(this);
-                msgBox->setText(QString("This timestamp has already been used for bib %1.  Continue?").arg(prevBib));
-                msgBox->setStandardButtons(QMessageBox::Yes|QMessageBox::No);
-                int ret = msgBox->exec();
-                if(ret == QMessageBox::No) {
-                    delete msgBox;
-                    return;
-                } else {
-                    delete msgBox;
-                }
-            }
-            out << actualTime + "," + bibnum + "\n";
-
-            // Add the timestamp and the bib number
-            hash.insert(actualTime, bibnum);
-
-            // Add this bid to the used bibs
-            bibsUsed.append(bibnum);
-
-            emit newEntry(channel, bibnum, actualTime);
-
-            csvFile->flush();
-        }
     }
 
+    // If we got here, then we need to write all the bibs
+    QTextStream out(csvFile);
+    for(int i = 0; i < bibNums.length(); i++) {
+        QString actualTime = roundTime(time, i);
+        out << actualTime + "," + bibNums.at(i) + "\n";
+
+        // Add the timestamp and the bib number
+        hash.insert(actualTime, bibNums.at(i));
+
+        // Add this bid to the used bibs
+        bibsUsed.append(bibNums.at(i));
+
+        emit newEntry(channel, bibNums.at(i), actualTime);
+    }
+
+    csvFile->flush();
+
     // Switch to the next image
-    int temp = imageSlider->value() + 1;
-    if (temp <= imageSlider->maximum()) {
+    if (imageSlider->value() + 1 <= imageSlider->maximum()) {
         imageSlider->triggerAction(QAbstractSlider::SliderSingleStepAdd);
     }
 }
@@ -396,7 +412,8 @@ void TimingPoint::updateImageInfo(int index) {
     }
 
     // If we've already written a bib number, show it in the Line Edit
-    bibNumEdit->setText(hash[timestamp->text()]);
+    QTime time = QTime::fromString(timestamp->text(), "hh:mm:ss.zzz");
+    bibNumEdit->setText(getBibs(time));
 
     // If we didn't find a number, check if we received one from the camera
     if(bibNumEdit->text().isEmpty() && timingCameras.length() > 0) {

@@ -65,6 +65,7 @@ public:
 private:
     void startBackgroundThread(QString ip, QString name);
     QString roundTime(QTime time, int nth);
+    QString getBibs(QTime time);
 
     // Common properties
     QList<TimingCamera*> timingCameras;
