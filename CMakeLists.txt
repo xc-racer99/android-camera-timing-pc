@@ -110,10 +110,13 @@ if(MINGW AND CMAKE_HOST_UNIX)
 #    install(FILES "${LICENSE_FILES}"
 #        DESTINATION licenses)
 
-    # gcc libraries - FIXME - these should probably not be hard-coded...
-    install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libstdc++-6.dll
-        DESTINATION .)
-    install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll
+    # Determine location libgcc and libstdc++ and install them
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-libgcc-file-name OUTPUT_VARIABLE STATIC_LIBGCC_PATH)
+    get_filename_component(MINGW_LIBS_PATH ${STATIC_LIBGCC_PATH} DIRECTORY)
+
+    file(GLOB LIBSTDCPP ${MINGW_LIBS_PATH}/libstdc++*.dll)
+    file(GLOB LIBGCC ${MINGW_LIBS_PATH}/libgcc*.dll)
+    install(FILES ${LIBSTDCPP} ${LIBGCC}
         DESTINATION .)
 elseif(WIN32 AND CMAKE_HOST_WIN32)
     # Building on Windows for Windows
