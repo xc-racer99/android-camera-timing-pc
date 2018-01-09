@@ -79,13 +79,22 @@ set (CPACK_RESOURCE_FILE_LICENSE
 set (CPACK_PACKAGE_VERSION_MAJOR 0)
 set (CPACK_PACKAGE_VERSION_MINOR 2)
 
-install(TARGETS AndroidCameraTiming
-    RUNTIME
-    DESTINATION .)
-
-# install licensing file
-install(FILES COPYING DESTINATION copyright
-    RENAME "Main Program.txt")
+if(UNIX)
+    install(TARGETS AndroidCameraTiming
+        RUNTIME
+        DESTINATION bin)
+    # install licensing file
+    # FIXME Don't abuse the bin directory for this file
+    install(FILES COPYING DESTINATION bin/copyright
+        RENAME "Main Program.txt")
+else()
+    install(TARGETS AndroidCameraTiming
+        RUNTIME
+        DESTINATION .)
+    # install licensing file
+    install(FILES COPYING DESTINATION copyright
+        RENAME "Main Program.txt")
+endif()
 
 if(MINGW AND CMAKE_HOST_UNIX)
     # package the needed libraries, superbuild installs them into ${PROJECT_BINARY_DIR}
@@ -140,6 +149,19 @@ elseif(WIN32 AND CMAKE_HOST_WIN32)
         ${PROJECT_BINARY_DIR}/styles
         ${PROJECT_BINARY_DIR}/translations
         DESTINATION .)
+elseif(UNIX AND EXISTS /usr/bin/dpkg AND EXISTS /usr/bin/lsb_release)
+    # Building on Debian or derivative
+    set(CPACK_GENERATOR_DEFAULT "DEB")
+    set(CPACK_PACKAGE_NAME "camera-timing-android")
+    set(CPACK_DEBIAN_PACKAGE_NAME "camera-timing-android")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5gui5, libqt5widgets5, libqt5xml5, libqt5serialport5")
+    if(NOT ${No_OCR})
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libtesseract3, tesseract-ocr-eng, liblept5,
+            libopencv-core2.4v5, libopencv-highgui2.4-deb0, libopencv-imgproc2.4v5, libopencv-ml2.4v5, libopencv-objdetect2.4v5,
+            libboost-system1.62.0, libboost-filesystem1.62.0")
+    endif()
+
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jonathan Bakker <xc-racer2@live.ca>")
 endif()
 
 if(WIN32)

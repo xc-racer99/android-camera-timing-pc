@@ -20,7 +20,8 @@ To build the executable, create a build directory and run
 
 #### Building a package
 Run `cpack` or `make package` to build a tar.gz file.
-deb, rpm, and other package types are not supported right now
+A .deb can be built with `cpack -G DEB`
+rpm and other package types are not supported right now
 
 ### Building on Windows for Windows
 Install [cmake](https://cmake.org/) and your desired version of [QT](https://www.qt.io/download) and its compiler.
