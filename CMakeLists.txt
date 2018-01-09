@@ -115,7 +115,7 @@ if(MINGW AND CMAKE_HOST_UNIX)
         DESTINATION .)
     install(FILES /usr/lib/gcc/i686-w64-mingw32/6.3-win32/libgcc_s_sjlj-1.dll
         DESTINATION .)
-else(WIN32 AND CMAKE_HOST_WIN32)
+elseif(WIN32 AND CMAKE_HOST_WIN32)
     # Building on Windows for Windows
 
     # Run windeployqt
@@ -126,10 +126,8 @@ else(WIN32 AND CMAKE_HOST_WIN32)
         COMMAND ${QT5_WINDEPLOYQT_EXECUTABLE} --release $<TARGET_FILE:AndroidCameraTiming>)
 
     # Install dlls
-    # FIXME In order for the GLOB to work, the files must exist _before_ cmake is run
-    # When packaging, re-run cmake first as a workaround
-    file(GLOB DLLs )
-    install(FILES ${PROJECT_BINARY_DIR}/*.dll
+    file(GLOB DLLs ${PROJECT_BINARY_DIR}/*.dll)
+    install(FILES ${DLLs}
         DESTINATION .)
 
     # other qt directories
